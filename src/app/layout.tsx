@@ -3,23 +3,29 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://shoaebmalik.in"),
-  title: "shoaebmalik.in | Mohammed Shoaeb Malik",
+  title: "Mohammed Shoaeb Malik | AI, Blockchain & Full-Stack Developer",
   description:
-    "The personal brand and premium founder portfolio of Mohammed Shoaeb Malik, building products across AI, blockchain, and full-stack systems.",
+    "Portfolio of Mohammed Shoaeb Malik showcasing AI systems, blockchain products, full-stack applications, hackathon achievements, and software engineering projects.",
   keywords: [
     "Mohammed Shoaeb Malik",
-    "AI products",
-    "blockchain",
-    "full-stack developer",
-    "product builder",
-    "Bengaluru"
+    "Shoaeb Malik",
+    "Mohammed Shoaeb Malik Portfolio",
+    "Shoaeb Malik Developer",
+    "Shoaeb Malik AI Developer",
+    "Shoaeb Malik Blockchain Developer",
+    "Shoaeb Malik Full Stack Developer"
   ],
   authors: [{ name: "Mohammed Shoaeb Malik" }],
   creator: "Mohammed Shoaeb Malik",
+  alternates: {
+    canonical: "https://shoaebmalik.in"
+  },
   openGraph: {
-    title: "shoaebmalik.in | Mohammed Shoaeb Malik",
+    title: "Mohammed Shoaeb Malik | AI, Blockchain & Full-Stack Developer",
     description:
-      "Building products across AI, blockchain, and full-stack systems.",
+      "Portfolio of Mohammed Shoaeb Malik showcasing AI systems, blockchain products, full-stack applications, hackathon achievements, and software engineering projects.",
+    url: "https://shoaebmalik.in",
+    siteName: "Mohammed Shoaeb Malik Portfolio",
     type: "website",
     images: [
       {
@@ -29,6 +35,13 @@ export const metadata: Metadata = {
         alt: "Mohammed Shoaeb Malik in a black suit"
       }
     ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mohammed Shoaeb Malik | AI, Blockchain & Full-Stack Developer",
+    description:
+      "Portfolio of Mohammed Shoaeb Malik showcasing AI systems, blockchain products, full-stack applications, hackathon achievements, and software engineering projects.",
+    images: ["/malik-black-suit (2).jpeg"]
   }
 };
 
@@ -39,7 +52,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Person",
+              name: "Mohammed Shoaeb Malik",
+              url: "https://shoaebmalik.in",
+              sameAs: ["https://github.com/ShoaebMalik19"],
+              jobTitle: "Software Developer",
+              worksFor: {
+                "@type": "Organization",
+                name: "Independent Developer"
+              }
+            })
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
