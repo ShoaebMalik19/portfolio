@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ThemeProvider } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -51,7 +52,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         <script
           type="application/ld+json"
@@ -70,7 +71,9 @@ export default function RootLayout({
             })
           }}
         />
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

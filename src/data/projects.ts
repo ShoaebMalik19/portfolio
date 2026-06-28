@@ -1,88 +1,68 @@
 export type Project = {
   name: string;
-  problem: string;
-  solution: string;
-  impact: string;
+  description: string;
+  techStack: string;
   github?: string;
   demo?: string;
+  demoLabel?: string;
+  githubLabel?: string;
 };
 
 export const projects: Project[] = [
   {
+    name: "PayShard Wallet",
+    description: "A blockchain-powered wallet that simplifies decentralized payments through a modern and intuitive user experience.",
+    techStack: "React, Next.js, Node.js, Web3",
+    demo: "https://pay-shard-wallet-tl5z.vercel.app/",
+    github: "https://github.com/ShoaebMalik19/PayShard-Wallet"
+  },
+  {
+    name: "TruthStamp",
+    description: "A digital authenticity platform that verifies content integrity and builds trust through verifiable proof.",
+    techStack: "React, Blockchain, Web3",
+    demo: "https://truth-stamp-6a1k.vercel.app/",
+    github: "https://github.com/ShoaebMalik19/Truth_stamp"
+  },
+  {
     name: "Proof.Market",
-    problem:
-      "Expert predictions often disappear into feeds without accountability or verifiable history.",
-    solution:
-      "A decentralized prediction market where experts stake reputation and predictions become on-chain records.",
-    impact:
-      "Turns opinion into a traceable market signal that can be audited, compared, and trusted.",
+    description: "A decentralized prediction market where opinions become transparent, measurable and verifiable.",
+    techStack: "React, Next.js, Blockchain, Smart Contracts",
+    demo: "https://prediction-market-three-iota.vercel.app/",
     github: "https://github.com/ShoaebMalik19/Prediction-Market"
   },
   {
-    name: "AI-FI",
-    problem:
-      "Hackathons, workshops, and technical events need more than static registration forms.",
-    solution:
-      "A full-stack event management platform for organizing participants, sessions, and operations.",
-    impact:
-      "Makes technical event execution clearer for teams, organizers, and attendees.",
+    name: "AI-FI Platform",
+    description: "A full-stack event management platform for hackathons, workshops and technical communities.",
+    techStack: "React, Node.js, Express, Excel Integration",
+    demo: "https://ai-fi-website-962s.vercel.app/",
     github: "https://github.com/ShoaebMalik19/ai-fi-website"
   },
   {
     name: "LakshyaAI",
-    problem:
-      "Students need career guidance that is practical, contextual, and available when decisions are made.",
-    solution:
-      "An AI-powered career guidance platform developed during Decode SIH with OSCode 2025.",
-    impact:
-      "Helps users move from uncertainty to informed next steps through AI-assisted guidance."
-  },
-  {
-    name: "TruthStamp",
-    problem:
-      "Digital media and claims are increasingly difficult to verify after they spread.",
-    solution:
-      "A digital authenticity and verification platform built to stamp and validate trust signals.",
-    impact:
-      "Creates a cleaner path for authenticity checks before misinformation compounds.",
-    github: "https://github.com/ShoaebMalik19/Truth_stamp"
-  },
-  {
-    name: "Rakshak",
-    problem:
-      "Safety tools often fail when people need fast, direct emergency response support.",
-    solution:
-      "A safety-focused product designed to improve protection and emergency response.",
-    impact:
-      "Prioritizes speed, clarity, and action in moments where every second matters.",
-    github: "https://github.com/ShoaebMalik19/Rakshak"
-  },
-  {
-    name: "PayShard",
-    problem:
-      "Blockchain payments need wallet experiences that feel understandable and usable.",
-    solution:
-      "A blockchain-powered wallet and payment infrastructure product.",
-    impact:
-      "Explores more accessible payment rails while preserving the power of decentralized systems.",
-    github: "https://github.com/ShoaebMalik19/PayShard-Wallet"
+    description: "An AI-powered career guidance platform developed during Decode SIH with OSCode 2025.",
+    techStack: "Python, AI, LLM, RAG",
+    github: "https://github.com/ShoaebMalik19/LakshyaAI",
+    demoLabel: "Concept Build"
   },
   {
     name: "Crime Detector",
-    problem:
-      "Crime-related information is hard to analyze quickly when patterns are spread across raw data.",
-    solution:
-      "An AI-assisted crime analysis and detection system.",
-    impact:
-      "Supports faster pattern recognition and better situational understanding."
+    description: "An AI-assisted crime analysis system that identifies patterns from structured and unstructured crime data.",
+    techStack: "Python, Machine Learning, Data Analysis",
+    github: "https://github.com/ShoaebMalik19/Crime_detector-",
+    demoLabel: "Concept Build"
   },
   {
     name: "Feedback Analyzer",
-    problem:
-      "Product feedback becomes noisy when sentiment, themes, and urgency are not separated.",
-    solution:
-      "An AI-driven sentiment and feedback analysis platform.",
-    impact:
-      "Converts unstructured feedback into sharper product and experience decisions."
+    description: "An AI-powered sentiment analysis platform that converts user feedback into actionable insights.",
+    techStack: "Python, Transformers, NLP, Django",
+    github: "https://github.com/ShoaebMalik19/feedback-analyzer",
+    demoLabel: "Concept Build"
+  },
+  {
+    name: "Trading RAG",
+    description: "An AI-powered Retrieval-Augmented Generation system for trading research, market context and intelligent financial analysis.",
+    techStack: "Python, RAG, LLMs, Vector Database",
+    demoLabel: "Coming Soon",
+    githubLabel: "Coming Soon"
   }
 ];
