@@ -728,7 +728,7 @@ function BlueprintBackground() {
 ══════════════════════════════════════════════════════════════ */
 function WinsGrid() {
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <SwipeRail label="Hackathon wins" desktopGrid="lg:grid-cols-3 lg:gap-4">
       {wins.map((w, i) => (
         <motion.article
           key={w.event}
@@ -739,7 +739,7 @@ function WinsGrid() {
           className="group card-premium relative flex flex-col overflow-hidden border border-border bg-card transition-all duration-500 hover:-translate-y-1 hover:border-accent/50"
         >
           {/* Visual header: project screen if there is one, otherwise a trophy plate */}
-          <div className="relative h-44 overflow-hidden border-b border-border">
+          <div className="relative h-32 overflow-hidden border-b border-border sm:h-40 lg:h-44">
             {w.image ? (
               <Image
                 src={w.image}
@@ -750,7 +750,7 @@ function WinsGrid() {
               />
             ) : (
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(215,199,170,0.16),transparent_60%)]">
-                <span className="absolute -bottom-3 right-5 whitespace-nowrap font-serif text-[72px] italic leading-none text-accent/20">
+                <span className="absolute -bottom-2 right-4 whitespace-nowrap font-serif text-[56px] italic leading-none text-accent/20 lg:-bottom-3 lg:right-5 lg:text-[72px]">
                   {w.project}
                 </span>
               </div>
@@ -761,14 +761,14 @@ function WinsGrid() {
             </span>
           </div>
 
-          <div className="flex flex-1 flex-col p-6">
-            <h3 className="font-display text-2xl font-semibold text-primary">{w.event}</h3>
+          <div className="flex flex-1 flex-col p-5 lg:p-6">
+            <h3 className="font-display text-[22px] font-semibold leading-tight text-primary lg:text-2xl">{w.event}</h3>
             {w.organiser && <p className="mt-1 text-xs uppercase tracking-[0.18em] text-secondary">{w.organiser}</p>}
 
-            <p className="mt-5 font-serif text-2xl italic text-accent">{w.project}</p>
-            <p className="mt-2 text-sm leading-7 text-secondary">{w.summary}</p>
+            <p className="mt-4 font-serif text-2xl italic text-accent lg:mt-5">{w.project}</p>
+            <p className="mt-1.5 text-sm leading-6 text-secondary lg:mt-2 lg:leading-7">{w.summary}</p>
 
-            <dl className="mt-5 grid gap-2 border-t border-border pt-4">
+            <dl className="mt-4 grid gap-2 border-t border-border pt-4 lg:mt-5">
               {w.facts.map((f) => (
                 <div key={f.k} className="grid grid-cols-[5.5rem_1fr] gap-3 text-sm">
                   <dt className="font-display text-[10px] uppercase tracking-[0.2em] text-secondary/80 pt-[3px]">{f.k}</dt>
@@ -778,7 +778,7 @@ function WinsGrid() {
             </dl>
 
             {w.links.length > 0 && (
-              <div className="mt-auto flex flex-wrap gap-3 pt-6">
+              <div className="mt-auto flex flex-wrap gap-2.5 pt-5 lg:gap-3 lg:pt-6">
                 {w.links.map((l, j) => (
                   <LinkButton key={l.href} link={l} solid={j === 0} />
                 ))}
@@ -787,7 +787,7 @@ function WinsGrid() {
           </div>
         </motion.article>
       ))}
-    </div>
+    </SwipeRail>
   );
 }
 
@@ -814,10 +814,40 @@ function LinkButton({ link, solid }: { link: ExtLink; solid?: boolean }) {
    EXPERIENCE — internships and client work, kept separate
 ══════════════════════════════════════════════════════════════ */
 function ExperienceSplit() {
+  const [tab, setTab] = useState<"intern" | "client">("client");
+  const groups = [
+    { key: "client" as const, title: "Client Work", note: "Delivered for paying clients and live businesses", roles: clientWork },
+    { key: "intern" as const, title: "Internships", note: "Startup and university lab", roles: internships }
+  ];
   return (
-    <div className="grid gap-12 lg:grid-cols-2 lg:gap-8">
-      <RoleColumn title="Internships" note="Startup and university lab" roles={internships} />
-      <RoleColumn title="Client Work" note="Delivered for paying clients and live businesses" roles={clientWork} />
+    <div>
+      {/* Phones and tablets: one group at a time */}
+      <div role="tablist" aria-label="Experience type" className="mb-5 grid grid-cols-2 gap-1 border border-border bg-card p-1 lg:hidden">
+        {groups.map((g) => (
+          <button
+            key={g.key}
+            role="tab"
+            type="button"
+            aria-selected={tab === g.key}
+            onClick={() => setTab(g.key)}
+            className={`flex items-center justify-center gap-2 py-2.5 font-display text-[11px] uppercase tracking-[0.18em] transition ${
+              tab === g.key ? "bg-primary text-background" : "text-secondary"
+            }`}
+          >
+            {g.title}
+            <span className={tab === g.key ? "text-background/60" : "text-secondary/60"}>{g.roles.length}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="grid gap-12 lg:grid-cols-2 lg:gap-8">
+        {[...groups].reverse().map((g) => (
+          // min-w-0: a grid item otherwise grows to fit the rail's full scroll width.
+          <div key={g.key} className={`min-w-0 ${tab === g.key ? "" : "hidden lg:block"}`}>
+            <RoleColumn title={g.title} note={g.note} roles={g.roles} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -825,11 +855,11 @@ function ExperienceSplit() {
 function RoleColumn({ title, note, roles }: { title: string; note: string; roles: Role[] }) {
   return (
     <div>
-      <div className="mb-5 flex items-end justify-between gap-4 border-b border-accent/30 pb-3">
+      <div className="mb-5 hidden items-end justify-between gap-4 border-b border-accent/30 pb-3 lg:flex">
         <h3 className="font-display text-sm uppercase tracking-[0.28em] text-accent">{title}</h3>
         <p className="text-right text-[11px] uppercase tracking-[0.16em] text-secondary/70">{note}</p>
       </div>
-      <div className="grid gap-3">
+      <SwipeRail label={title} desktopGrid="lg:grid-cols-1 lg:gap-3">
         {roles.map((r, i) => (
           <motion.article
             key={r.org}
@@ -840,7 +870,7 @@ function RoleColumn({ title, note, roles }: { title: string; note: string; roles
             className="group card-premium overflow-hidden border border-border bg-card transition duration-300 hover:border-accent/40"
           >
             {r.image && (
-              <div className="relative h-40 overflow-hidden border-b border-border">
+              <div className="relative h-32 overflow-hidden border-b border-border sm:h-36 lg:h-40">
                 <Image
                   src={r.image}
                   alt={`${r.org} website`}
@@ -854,18 +884,22 @@ function RoleColumn({ title, note, roles }: { title: string; note: string; roles
                 </span>
               </div>
             )}
-            <div className="p-5 sm:p-6">
+            <div className="p-5 lg:p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <h4 className="font-display text-xl font-semibold text-primary">{r.org}</h4>
                   <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-secondary">{r.kind}</p>
                 </div>
-                {r.links.map((l) => (
-                  <LinkButton key={l.href} link={l} />
-                ))}
+                {r.links.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {r.links.map((l) => (
+                      <LinkButton key={l.href} link={l} />
+                    ))}
+                  </div>
+                )}
               </div>
-              <p className="mt-4 text-sm leading-7 text-secondary">{r.summary}</p>
-              {r.detail && <p className="mt-2 text-sm leading-7 text-secondary/80">{r.detail}</p>}
+              <p className="mt-3 text-sm leading-6 text-secondary lg:mt-4 lg:leading-7">{r.summary}</p>
+              {r.detail && <p className="mt-2 hidden text-sm leading-7 text-secondary/80 sm:block">{r.detail}</p>}
               {r.stack && (
                 <ul className="mt-4 flex flex-wrap gap-2">
                   {r.stack.map((s) => (
@@ -878,7 +912,7 @@ function RoleColumn({ title, note, roles }: { title: string; note: string; roles
             </div>
           </motion.article>
         ))}
-      </div>
+      </SwipeRail>
     </div>
   );
 }
@@ -892,13 +926,13 @@ function FloatingAbout() {
   const toggle = (key: string) => setOpenKey((p) => (p === key ? null : key));
 
   return (
-    <section id="about" className="relative px-5 py-12 sm:px-8 lg:px-12 bg-bg-about transition-colors duration-500">
+    <section id="about" className="relative px-5 py-10 sm:px-8 sm:py-12 lg:px-12 bg-bg-about transition-colors duration-500">
       <motion.div
         initial={{ opacity: 0, y: 46, scale: 0.97 }}
         whileInView={{ opacity: 1, y: 0, scale: 1 }}
         viewport={{ once: true, margin: "-120px" }}
         transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
-        className="mx-auto max-w-4xl border border-border bg-card card-premium p-6 sm:p-8"
+        className="mx-auto max-w-4xl border border-border bg-card card-premium p-5 sm:p-8"
       >
         <div className="mb-6 flex items-center justify-between gap-4">
           <p className="font-display text-xs uppercase tracking-[0.34em] text-secondary">01 — About</p>
@@ -918,7 +952,7 @@ function FloatingAbout() {
             <p className="mt-3 text-sm leading-7 text-secondary">
               My focus is simple: identify meaningful problems, design practical solutions, and turn ideas into working systems.
             </p>
-            <p className="mt-3 text-sm leading-7 text-secondary">
+            <p className="mt-3 hidden text-sm leading-7 text-secondary sm:block">
               From blockchain products and AI-powered platforms to full-stack applications, I enjoy creating technology that people can actually use.
             </p>
           </div>
@@ -1015,7 +1049,10 @@ function ProjectShowcase() {
   return (
     <div className="relative">
       <div className="mb-5 flex items-center justify-between">
-        <p className="text-xs uppercase tracking-[0.24em] text-secondary">Drag or use arrows to browse</p>
+        <p className="text-xs uppercase tracking-[0.24em] text-secondary">
+          <span className="lg:hidden">Swipe &middot; {projects.length} projects</span>
+          <span className="hidden lg:inline">Drag or use arrows to browse</span>
+        </p>
         <div className="flex gap-2">
           {([-1, 1] as const).map((dir) => (
             <button
@@ -1037,10 +1074,10 @@ function ProjectShowcase() {
         onMouseMove={onMouseMove}
         onMouseUp={endDrag}
         onMouseLeave={endDrag}
-        className="horizontal-showcase -mx-5 overflow-x-auto px-5 pb-5 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12"
+        className="horizontal-showcase -mx-5 snap-x snap-mandatory scroll-px-5 overflow-x-auto px-5 pb-5 sm:-mx-8 sm:scroll-px-8 sm:px-8 lg:-mx-12 lg:snap-none lg:px-12"
         style={{ cursor: "grab" }}
       >
-        <div className="flex w-max gap-4 py-2">
+        <div className="flex w-max gap-3 py-2 lg:gap-4">
           {projects.map((project, index) => (
             <ProjectCard key={project.name} project={project} index={index} />
           ))}
@@ -1061,12 +1098,12 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       onClick={() => {
         if (project.demo) window.open(project.demo, "_blank", "noopener,noreferrer");
       }}
-      className={`group card-premium flex h-[500px] w-[300px] shrink-0 flex-col overflow-hidden border border-border bg-card transition-all duration-500 hover:w-[420px] hover:border-accent/50 sm:w-[330px] sm:hover:w-[450px] ${
+      className={`group card-premium flex h-[430px] w-[80vw] max-w-[340px] shrink-0 snap-start flex-col overflow-hidden border border-border bg-card transition-all duration-500 hover:border-accent/50 sm:w-[330px] lg:h-[500px] lg:hover:w-[450px] ${
         project.demo ? "cursor-pointer" : ""
       }`}
     >
       {/* Screen */}
-      <div className="relative h-[180px] shrink-0 overflow-hidden border-b border-border">
+      <div className="relative h-[150px] shrink-0 overflow-hidden border-b border-border lg:h-[180px]">
         {project.image ? (
           <Image
             src={project.image}
@@ -1093,11 +1130,13 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
       <div className="flex flex-1 flex-col justify-between p-5">
         <div>
-          <h3 className="font-display text-[26px] font-semibold leading-tight text-primary transition-colors group-hover:text-accent">
+          <h3 className="font-display text-[22px] font-semibold leading-tight text-primary transition-colors group-hover:text-accent lg:text-[26px]">
             {project.name}
           </h3>
           <p className="mt-3 line-clamp-3 text-sm leading-7 text-secondary">{project.description}</p>
-          <div className="grid max-h-0 gap-3 overflow-hidden opacity-0 transition-all duration-500 group-hover:mt-4 group-hover:max-h-40 group-hover:opacity-100">
+          {/* Phones have no hover, so the stack shows inline there; desktop reveals it on hover. */}
+          <p className="mt-3 text-[11px] uppercase tracking-[0.14em] text-accent/80 lg:hidden">{project.techStack}</p>
+          <div className="hidden max-h-0 gap-3 overflow-hidden opacity-0 transition-all duration-500 group-hover:mt-4 group-hover:max-h-40 group-hover:opacity-100 lg:grid">
             <ProjectPoint label="Tech Stack" body={project.techStack} />
           </div>
         </div>
@@ -1145,7 +1184,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 ══════════════════════════════════════════════════════════════ */
 function ProgressLog() {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <SwipeRail label="Credentials and community" desktopGrid="lg:grid-cols-3 lg:gap-3" itemClass="w-[76%] max-w-[320px] sm:w-[42%]">
       {progressItems.map((item) => (
         <motion.article
           key={item.title}
@@ -1180,7 +1219,7 @@ function ProgressLog() {
           )}
         </motion.article>
       ))}
-    </div>
+    </SwipeRail>
   );
 }
 
@@ -1190,7 +1229,7 @@ function ProgressLog() {
 ══════════════════════════════════════════════════════════════ */
 function ExpertiseGrid() {
   return (
-    <div className="grid gap-5 sm:grid-cols-2">
+    <div className="grid gap-3 sm:grid-cols-2 lg:gap-5">
       {expertiseGroups.map((group, i) => (
         <motion.div
           key={group.code}
@@ -1198,10 +1237,10 @@ function ExpertiseGrid() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ delay: i * 0.08, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="group card-premium rounded-none border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
+          className="group card-premium rounded-none border border-border bg-card p-4 transition-all duration-300 sm:p-6 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
         >
           {/* Category header */}
-          <div className="mb-5 flex items-center gap-3">
+          <div className="mb-3 flex items-center gap-3 sm:mb-5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-accent/25 bg-accent/8 font-mono text-xs text-accent">
               {group.icon}
             </span>
@@ -1216,11 +1255,11 @@ function ExpertiseGrid() {
           </div>
 
           {/* Tech pills */}
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-1.5 sm:gap-2">
             {group.items.map((item) => (
               <li
                 key={item}
-                className="border border-border bg-bg-hero px-3 py-1.5 text-[11px] font-medium text-secondary transition-all duration-200 hover:border-accent/60 hover:text-primary"
+                className="border border-border bg-bg-hero px-2.5 py-1 text-[11px] sm:px-3 sm:py-1.5 font-medium text-secondary transition-all duration-200 hover:border-accent/60 hover:text-primary"
               >
                 {item}
               </li>
@@ -1248,7 +1287,7 @@ function ContactSection() {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-60px" }}
-        className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"
+        className="mb-8 flex flex-col gap-5 sm:mb-10 sm:gap-6 lg:flex-row lg:items-end lg:justify-between"
       >
         <h3 className="max-w-[16ch] font-serif text-[clamp(2.2rem,4.4vw,3.8rem)] font-medium leading-[1.02] text-primary">
           Let&rsquo;s build something <span className="italic text-accent">worth shipping.</span>
@@ -1279,12 +1318,12 @@ function ContactSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
-          className="group card-premium flex flex-col items-center gap-4 border border-border bg-card px-6 py-10 transition-all hover:-translate-y-0.5 hover:border-accent/60"
+          className="group card-premium flex flex-col items-center gap-3 border border-border bg-card px-5 py-7 transition-all sm:gap-4 sm:px-6 sm:py-10 hover:-translate-y-0.5 hover:border-accent/60"
         >
           <span className="text-accent/75 transition group-hover:text-accent">{link.icon}</span>
           <div className="text-center">
             <p className="font-display text-xs uppercase tracking-[0.28em] text-secondary">{link.label}</p>
-            <p className="mt-2 font-serif text-2xl text-primary transition group-hover:text-accent">{link.value}</p>
+            <p className="mt-2 break-all font-serif text-xl text-primary transition group-hover:text-accent sm:text-2xl">{link.value}</p>
           </div>
         </motion.a>
       ))}
@@ -1296,13 +1335,102 @@ function ContactSection() {
 
 
 /* ══════════════════════════════════════════════════════════════
+   SWIPE RAIL — horizontal snap scroller on phones and tablets,
+   a normal grid on desktop. The next card always peeks in so it's
+   obvious there is more, and the counter + dots say how much.
+══════════════════════════════════════════════════════════════ */
+function SwipeRail({
+  children,
+  desktopGrid,
+  label,
+  itemClass = "w-[84%] max-w-[380px] sm:w-[46%]"
+}: {
+  children: React.ReactNode[];
+  desktopGrid: string;
+  label: string;
+  itemClass?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const count = children.length;
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onScroll = () => {
+      const first = el.firstElementChild as HTMLElement | null;
+      if (!first) return;
+      const step = first.offsetWidth + parseFloat(getComputedStyle(el).columnGap || "0");
+      // At the far right the last card can't snap to the start, so mark it active there.
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+      setActive(atEnd ? count - 1 : Math.min(count - 1, Math.round(el.scrollLeft / step)));
+    };
+    onScroll();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [count]);
+
+  const goTo = (i: number) => {
+    const el = ref.current;
+    const target = el?.children[i] as HTMLElement | undefined;
+    if (!el || !target) return;
+    el.scrollTo({ left: target.offsetLeft - parseFloat(getComputedStyle(el).paddingLeft), behavior: "smooth" });
+  };
+
+  return (
+    <div>
+      <div
+        ref={ref}
+        role="region"
+        aria-label={label}
+        className={`no-scrollbar relative -mx-5 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 pb-1 sm:-mx-8 sm:scroll-px-8 sm:px-8 lg:mx-0 lg:grid lg:snap-none lg:overflow-visible lg:px-0 lg:pb-0 ${desktopGrid}`}
+      >
+        {children.map((child, i) => (
+          <div key={i} className={`flex shrink-0 snap-start [&>*]:w-full lg:w-auto lg:max-w-none ${itemClass}`}>
+            {child}
+          </div>
+        ))}
+      </div>
+
+      {count > 1 && (
+        <div className="mt-5 flex items-center justify-between lg:hidden">
+          <span className="font-display text-[11px] tracking-[0.24em] text-secondary">
+            <span className="text-primary">{String(active + 1).padStart(2, "0")}</span> / {String(count).padStart(2, "0")}
+          </span>
+          <div className="flex items-center gap-1.5">
+            {Array.from({ length: count }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => goTo(i)}
+                aria-label={`Show item ${i + 1} of ${count}`}
+                className="flex h-6 items-center px-0.5"
+              >
+                <span
+                  className={`block h-[3px] rounded-full transition-all duration-300 ${
+                    i === active ? "w-6 bg-accent" : "w-2.5 bg-white/20"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+          <span className="flex items-center gap-1.5 font-display text-[10px] uppercase tracking-[0.24em] text-secondary/80">
+            Swipe <ArrowRight size={12} className="swipe-nudge" />
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
    SHARED HELPERS
 ══════════════════════════════════════════════════════════════ */
 function Section({ id, eyebrow, title, children, bgClass = "" }: {
   id: string; eyebrow: string; title: string; children: React.ReactNode; bgClass?: string;
 }) {
   return (
-    <section id={id} className={`relative px-5 py-20 sm:px-8 sm:py-24 lg:px-12 transition-colors duration-500 ${bgClass}`}>
+    <section id={id} className={`relative px-5 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24 transition-colors duration-500 ${bgClass}`}>
       <motion.div
         initial="hidden"
         whileInView="visible"
@@ -1310,10 +1438,10 @@ function Section({ id, eyebrow, title, children, bgClass = "" }: {
         variants={fadeUp}
         className="mx-auto max-w-7xl"
       >
-        <div className="mb-10 flex items-end justify-between gap-6 border-b border-border pb-6">
+        <div className="mb-7 flex items-end justify-between gap-6 border-b border-border pb-5 sm:mb-10 sm:pb-6">
           <div>
-            <p className="font-display text-sm uppercase tracking-[0.3em] text-secondary">{eyebrow}</p>
-            <h2 className="mt-3 font-display text-4xl font-semibold text-primary sm:text-6xl">{title}</h2>
+            <p className="font-display text-xs uppercase tracking-[0.3em] text-secondary sm:text-sm">{eyebrow}</p>
+            <h2 className="mt-2 font-display text-[2.1rem] font-semibold leading-tight text-primary sm:mt-3 sm:text-6xl">{title}</h2>
           </div>
           <ShieldCheck className="hidden text-accent/60 sm:block" size={26} />
         </div>

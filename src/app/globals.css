@@ -251,3 +251,22 @@ body::before {
     cursor: auto;
   }
 }
+
+/* ── Swipe rails ───────────────────────────────────────────── */
+.no-scrollbar {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.swipe-nudge {
+  animation: swipe-nudge 1.6s ease-in-out infinite;
+}
+@keyframes swipe-nudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .swipe-nudge { animation: none; }
+}
