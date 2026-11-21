@@ -23,8 +23,10 @@ const config: Config = {
         "bg-contact": "var(--bg-contact)",
       },
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["Space Grotesk", "Inter", "ui-sans-serif", "system-ui", "sans-serif"]
+        sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-grotesk)", "var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
+        script: ["var(--font-script)", "cursive"]
       },
       boxShadow: {
         glow: "0 24px 80px rgba(215, 199, 170, 0.16)"

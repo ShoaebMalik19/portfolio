@@ -1,6 +1,18 @@
 import type { Metadata } from "next";
+import { Cormorant_Garamond, Inter, Mrs_Saint_Delafield, Space_Grotesk } from "next/font/google";
 import { ThemeProvider } from "@/components/providers";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk", display: "swap" });
+const serif = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-serif",
+  display: "swap"
+});
+const script = Mrs_Saint_Delafield({ subsets: ["latin"], weight: "400", variable: "--font-script", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://shoaebmalik.in"),
@@ -52,7 +64,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${grotesk.variable} ${serif.variable} ${script.variable}`}
+    >
       <body>
         <script
           type="application/ld+json"
