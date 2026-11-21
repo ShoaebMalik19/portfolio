@@ -10,6 +10,7 @@ import {
   useTransform,
   useMotionTemplate,
   useReducedMotion,
+  MotionConfig,
   AnimatePresence,
   type Variants
 } from "framer-motion";
@@ -159,6 +160,9 @@ function CursorGlow() {
 ══════════════════════════════════════════════════════════════ */
 export function PortfolioHome() {
   return (
+    // reducedMotion="user": framer skips movement for visitors who ask for less
+    // motion, while server and client still render identical markup.
+    <MotionConfig reducedMotion="user">
     <main className="relative">
       <CursorGlow />
       <TopNav />
@@ -194,6 +198,7 @@ export function PortfolioHome() {
         Mohammed Shoaeb Malik
       </footer>
     </main>
+    </MotionConfig>
   );
 }
 
@@ -222,7 +227,7 @@ function Hero() {
 
       {/* Status pills */}
       <motion.div
-        initial={reduce ? false : { opacity: 0, y: -8 }}
+        initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.5, ease }}
         className="relative z-30 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-5 pt-24 text-[12px] text-secondary sm:pt-[92px]"
@@ -244,7 +249,7 @@ function Hero() {
       <div className="relative h-[58svh] min-h-[400px] sm:h-[66svh] lg:absolute lg:inset-0 lg:h-auto">
         <motion.div
           style={{ opacity: ribbonOpacity, y: ribbonY }}
-          initial={reduce ? false : { opacity: 0 }}
+          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.4, delay: 0.3 }}
           className="absolute inset-x-0 top-[4%] lg:top-[19%]"
@@ -253,7 +258,7 @@ function Hero() {
         </motion.div>
 
         <motion.div
-          initial={reduce ? false : { opacity: 0, y: 50, filter: "blur(14px)" }}
+          initial={{ opacity: 0, y: 50, filter: "blur(14px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 1.1, delay: 0.1, ease }}
           className="absolute inset-x-0 bottom-0 z-10 flex justify-center"
@@ -269,7 +274,7 @@ function Hero() {
 
       {/* Intro — bottom left */}
       <motion.div
-        initial={reduce ? false : { opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9, delay: 0.45, ease }}
         className="relative z-30 -mt-10 px-5 sm:px-8 lg:absolute lg:bottom-14 lg:left-12 lg:mt-0 lg:max-w-[520px] lg:px-0"
@@ -307,7 +312,7 @@ function Hero() {
 
       {/* Quote + signature — bottom right */}
       <motion.figure
-        initial={reduce ? false : { opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9, delay: 0.6, ease }}
         className="relative z-30 mx-5 mb-14 mt-10 max-w-[360px] sm:mx-8 lg:absolute lg:bottom-16 lg:right-12 lg:m-0"
@@ -358,7 +363,14 @@ function WorkRibbon() {
             className="ribbon-card"
             style={{ transform: `rotateY(${i * step}deg) translateZ(calc(var(--ribbon-r) * -1))` }}
           >
-            <Image src={c.src} alt={i < ribbonShots.length ? c.label : ""} fill sizes="320px" className="object-cover object-top" />
+            <Image
+              src={c.src}
+              alt={i < ribbonShots.length ? c.label : ""}
+              fill
+              sizes="340px"
+              priority
+              className="object-cover object-top"
+            />
             <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-6 font-display text-[10px] uppercase tracking-[0.2em] text-white/85">
               {c.label}
             </figcaption>
