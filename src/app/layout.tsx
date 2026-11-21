@@ -78,7 +78,7 @@ export default function RootLayout({
               "@type": "Person",
               name: "Mohammed Shoaeb Malik",
               url: "https://shoaebmalik.in",
-              sameAs: ["https://github.com/ShoaebMalik19"],
+              sameAs: ["https://github.com/ShoaebMalik19", "https://t.me/SHOAEB19", "https://x.com/malik_shoa44572"],
               jobTitle: "Software Developer",
               worksFor: {
                 "@type": "Organization",

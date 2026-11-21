@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Github,
   Mail,
+  MessageCircle,
   MapPin,
   ShieldCheck,
   Trophy
@@ -34,6 +35,11 @@ import { Cormorant_Garamond } from "next/font/google";
 const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["600"] });
 
 const EMAIL = "shoaebmalik19@gmail.com";
+// Server-side redirect: the WhatsApp number never appears in the page or bundle.
+const WHATSAPP_PROJECT = "/go/whatsapp?t=project";
+const WHATSAPP_HELLO = "/go/whatsapp";
+const TELEGRAM = "https://t.me/SHOAEB19";
+const X_PROFILE = "https://x.com/malik_shoa44572";
 
 /* ── Animation preset ──────────────────────────────────────── */
 const fadeUp: Variants = {
@@ -291,7 +297,9 @@ function Hero() {
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <a
-            href={`mailto:${EMAIL}`}
+            href={WHATSAPP_PROJECT}
+            target="_blank"
+            rel="nofollow noopener noreferrer"
             data-cursor="interactive"
             className="group inline-flex items-center gap-3 rounded-full bg-primary py-1.5 pl-1.5 pr-5 text-[14px] font-medium text-background transition hover:bg-accent"
           >
@@ -1275,9 +1283,12 @@ function ExpertiseGrid() {
    CONTACT
 ══════════════════════════════════════════════════════════════ */
 function ContactSection() {
-  const links = [
-    { icon: <Mail size={20} />, label: "Email", value: EMAIL, href: `mailto:${EMAIL}` },
-    { icon: <Github size={20} />, label: "GitHub", value: "github.com/ShoaebMalik19", href: "https://github.com/ShoaebMalik19" }
+  const links: { icon: React.ReactNode; label: string; value: string; href: string; wide?: boolean; hidden?: boolean }[] = [
+    { icon: <Mail size={20} />, label: "Email", value: EMAIL, href: `mailto:${EMAIL}`, wide: true },
+    { icon: <MessageCircle size={20} />, label: "WhatsApp", value: "Chat with me", href: WHATSAPP_HELLO, hidden: true },
+    { icon: <TelegramIcon />, label: "Telegram", value: "@SHOAEB19", href: TELEGRAM },
+    { icon: <XIcon />, label: "X", value: "@malik_shoa44572", href: X_PROFILE },
+    { icon: <Github size={20} />, label: "GitHub", value: "ShoaebMalik19", href: "https://github.com/ShoaebMalik19" }
   ];
 
   return (
@@ -1294,7 +1305,9 @@ function ContactSection() {
         </h3>
         <div className="flex flex-col items-start gap-2 lg:items-end">
           <a
-            href={`mailto:${EMAIL}`}
+            href={WHATSAPP_PROJECT}
+            target="_blank"
+            rel="nofollow noopener noreferrer"
             data-cursor="interactive"
             className="group inline-flex items-center gap-3 rounded-full bg-primary py-1.5 pl-1.5 pr-5 text-[14px] font-medium text-background transition hover:bg-accent"
           >
@@ -1303,27 +1316,35 @@ function ContactSection() {
             </span>
             Begin a project
           </a>
-          <p className="text-xs uppercase tracking-[0.2em] text-secondary/70">Internships · client projects · hackathon teams</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-secondary/70">Opens WhatsApp · internships · client projects</p>
         </div>
       </motion.div>
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
       {links.map((link) => (
         <motion.a
-          key={link.href}
+          key={link.label}
           href={link.href}
-          target={link.href.startsWith("http") ? "_blank" : undefined}
-          rel="noreferrer"
+          target={link.href.startsWith("mailto:") ? undefined : "_blank"}
+          rel={link.hidden ? "nofollow noopener noreferrer" : "noopener noreferrer"}
           data-cursor="interactive"
           variants={fadeUp}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
-          className="group card-premium flex flex-col items-center gap-3 border border-border bg-card px-5 py-7 transition-all sm:gap-4 sm:px-6 sm:py-10 hover:-translate-y-0.5 hover:border-accent/60"
+          className={`group card-premium flex flex-col items-center gap-3 border border-border bg-card px-3 py-6 transition-all hover:-translate-y-0.5 hover:border-accent/60 sm:gap-4 sm:px-6 sm:py-9 ${
+            link.wide ? "col-span-2" : ""
+          }`}
         >
           <span className="text-accent/75 transition group-hover:text-accent">{link.icon}</span>
           <div className="text-center">
             <p className="font-display text-xs uppercase tracking-[0.28em] text-secondary">{link.label}</p>
-            <p className="mt-2 break-all font-serif text-xl text-primary transition group-hover:text-accent sm:text-2xl">{link.value}</p>
+            <p
+              className={`mt-2 break-all font-serif text-primary transition group-hover:text-accent ${
+                link.wide ? "text-xl sm:text-2xl" : "text-base sm:text-lg"
+              }`}
+            >
+              {link.value}
+            </p>
           </div>
         </motion.a>
       ))}
@@ -1420,6 +1441,23 @@ function SwipeRail({
         </div>
       )}
     </div>
+  );
+}
+
+/* Brand marks (lucide has no Telegram or X icons) */
+function TelegramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden>
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden>
+      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+    </svg>
   );
 }
 
