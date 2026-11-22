@@ -56,6 +56,14 @@ export const projects: Project[] = [
     github: "https://github.com/ShoaebMalik19/ai-fi-website"
   },
   {
+    name: "Trading RAG",
+    description: "A RAG assistant for Smart Money Concepts trading. Answers are grounded in my own strategy notes and cite the exact notes used, over a live-simulated SMC chart.",
+    techStack: "Python, LangChain, ChromaDB, Gemini, Streamlit",
+    image: "/work/tradingrag.webp",
+    demo: "https://trading-rag-smc.streamlit.app",
+    github: "https://github.com/ShoaebMalik19/Trading_RAG"
+  },
+  {
     name: "LakshyaAI",
     description: "An AI-powered career counselling platform: career discovery, an AI chatbot, learning resources and career comparisons.",
     techStack: "Python, AI, LLM, RAG",
@@ -76,13 +84,6 @@ export const projects: Project[] = [
     techStack: "Python, YOLOv8, MediaPipe Pose, OpenCV",
     github: "https://github.com/ShoaebMalik19/Crime_detector-",
     demoLabel: "Concept Build"
-  },
-  {
-    name: "Trading RAG",
-    description: "A RAG chatbot for Smart Money Concepts trading, grounded in your own notes so answers cite what you actually wrote.",
-    techStack: "Python, LangChain, ChromaDB, Gemini",
-    github: "https://github.com/ShoaebMalik19/Trading_RAG",
-    demoLabel: "Demo Coming Soon"
   }
 ];
 
@@ -95,5 +96,6 @@ export const ribbonShots = [
   { src: "/work/digitalgogle.webp", label: "Digital Goggle" },
   { src: "/work/synapse.webp", label: "Synapse" },
   { src: "/work/payshard.webp", label: "PayShard Wallet" },
-  { src: "/work/aifi.webp", label: "AI-FI Platform" }
+  { src: "/work/aifi.webp", label: "AI-FI Platform" },
+  { src: "/work/tradingrag.webp", label: "Trading RAG" }
 ];
