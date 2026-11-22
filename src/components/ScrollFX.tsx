@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  AnimatePresence,
   animate,
+  type MotionValue,
   motion,
   useInView,
   useMotionValue,
-  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useSpring,
@@ -106,236 +107,388 @@ export function ScrollBanner({ text }: { text: string }) {
 }
 
 /*
-  CIRCUIT TRACE
-  A gold signal line that draws itself down the page as you read, like a
-  trace on a circuit board. It runs only in the side margins, switches
-  sides through the empty padding at the top of each section with 45°
-  circuit bends, and lights a node as it reaches each section.
-  The tip stays level with your reading position (60% down the screen).
-  Desktop only; phones keep the progress bar.
+  EDGE LIGHT
+  A calm, straight light along the left edge of the screen that fills as
+  you read. No crossings, nothing near the content. Desktop only.
 */
-const TRACE_IDS = ["about", "wins", "experience", "services", "projects", "progress", "expertise", "faq", "contact"];
+export function EdgeLight() {
+  const { scrollYProgress } = useScroll();
+  const top = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  return (
+    <div aria-hidden className="pointer-events-none fixed bottom-6 left-1.5 top-24 z-40 hidden w-px lg:block">
+      <div className="absolute inset-0 bg-white/[0.06]" />
+      <motion.div className="absolute inset-x-0 top-0 origin-top bg-gradient-to-b from-transparent via-[#d7c7aa]/50 to-[#e8d6ae]" style={{ height: top }} />
+      <motion.span
+        className="absolute left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#fffaf0] shadow-[0_0_12px_3px_rgba(215,199,170,0.7)]"
+        style={{ top }}
+      />
+    </div>
+  );
+}
 
-type Node = { x: number; y: number; id: string };
+/*
+  BYTE — the roaming robot
+  Parks in the side margin beside each section, alternating sides, and
+  does a looping flight across the page when you scroll into the next
+  section: it grows mid-flight, barrel-rolls and lands. Each section has
+  its own face and a short line. It looks at your cursor, gets startled
+  by very fast scrolling, pulses gently with the scroll, and says hi
+  when clicked (on wide screens, where it sits clear of the content).
+*/
+type Mood = "happy" | "star" | "focus" | "wink" | "excited" | "cool" | "curious" | "love" | "whoa";
 
-export function CircuitTrace() {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const pathRef = useRef<SVGPathElement>(null);
-  const [geo, setGeo] = useState<{ w: number; h: number; d: string; nodes: Node[] } | null>(null);
-  const [len, setLen] = useState(0);
-  const samples = useRef<{ l: number; y: number }[]>([]);
-  const target = useMotionValue(0);
-  // Locked to the scroll position: no smoothing, so it never trails behind.
-  const drawn = target;
-  const dashOffset = useTransform(drawn, (v) => Math.max(0, len - v));
-  // Bot position and expression live in motion values, so following the
-  // scroll never re-renders React.
-  const botX = useMotionValue(-100);
-  const botY = useMotionValue(-100);
-  const lookX = useSpring(0, { stiffness: 300, damping: 26 });
-  const lookY = useSpring(0, { stiffness: 300, damping: 26 });
-  const tilt = useSpring(0, { stiffness: 200, damping: 18 });
-  const [lit, setLit] = useState(0);
-  const litRef = useRef(0);
+const STOPS: { id: string; mood: Mood; say: string }[] = [
+  { id: "about", mood: "happy", say: "Hi, I'm Byte! I'll show you around." },
+  { id: "wins", mood: "star", say: "Three hackathon wins!" },
+  { id: "experience", mood: "focus", say: "Real client work, live today." },
+  { id: "services", mood: "wink", say: "Need a website? Psst, hire him." },
+  { id: "projects", mood: "excited", say: "Try the filters!" },
+  { id: "progress", mood: "cool", say: "Oracle certified." },
+  { id: "expertise", mood: "curious", say: "The toolkit." },
+  { id: "faq", mood: "curious", say: "Got questions?" },
+  { id: "contact", mood: "love", say: "Say hello!" }
+];
 
-  // Build the path from where the sections actually are.
-  useEffect(() => {
-    const host = svgRef.current?.parentElement;
-    if (!host) return;
-    const build = () => {
-      const w = host.clientWidth;
-      const h = host.scrollHeight;
-      const els = TRACE_IDS.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
-      if (els.length < 2 || w < 1024) return setGeo(null);
-      const hostTop = host.getBoundingClientRect().top + window.scrollY;
-      // Gutter centre: halfway between the page edge and the content column.
-      const content = Math.min(1280, w - 96);
-      const gutter = Math.max(18, (w - content) / 4);
-      const L = gutter;
-      const R = w - gutter;
-      const bend = 22;
-      const span = 80;
-      const nodes: Node[] = [];
-      let side = L;
-      let d = "";
-      els.forEach((el, i) => {
-        const top = el.getBoundingClientRect().top + window.scrollY - hostTop;
-        const y = top; // the boundary between two sections
-        if (i === 0) {
-          d = `M ${side} ${y}`;
-        } else {
-          const next = side === L ? R : L;
-          const dir = next > side ? 1 : -1;
-          // run down the margin, bend 45° into the crossing, cross, bend back down
-          // Glide across on a shallow slope spread over the section gap, so the
-          // signal travels across while you scroll instead of jumping.
-          d += ` L ${side} ${y - span - bend} L ${side + dir * bend} ${y - span} L ${next - dir * bend} ${y + span} L ${next} ${y + span + bend}`;
-          side = next;
-        }
-        nodes.push({ x: side, y: i === 0 ? y : y + span + bend, id: el.id });
-      });
-      const lastEl = els[els.length - 1];
-      const end = lastEl.getBoundingClientRect().bottom + window.scrollY - hostTop - 60;
-      d += ` L ${side} ${end}`;
-      setGeo({ w, h, d, nodes });
-    };
-    build();
-    const ro = new ResizeObserver(() => build());
-    ro.observe(host);
-    window.addEventListener("resize", build);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", build);
-    };
+const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+export function RoamingBot() {
+  const x = useMotionValue(-200);
+  const y = useMotionValue(-200);
+  const sx = useSpring(x, { stiffness: 520, damping: 46, mass: 0.6 });
+  const sy = useSpring(y, { stiffness: 520, damping: 46, mass: 0.6 });
+  const scale = useSpring(1, { stiffness: 380, damping: 26 });
+  const rotate = useSpring(0, { stiffness: 380, damping: 30 });
+  const opacity = useSpring(0, { stiffness: 200, damping: 30 });
+  const lookX = useSpring(0, { stiffness: 300, damping: 24 });
+  const lookY = useSpring(0, { stiffness: 300, damping: 24 });
+
+  const [mood, setMood] = useState<Mood>("happy");
+  const [bubble, setBubble] = useState<{ text: string; left: boolean } | null>(null);
+  const [size, setSize] = useState(64);
+  const [clickable, setClickable] = useState(false);
+
+  const st = useRef({ stop: -1, flying: false, startled: 0, lastY: 0, lastT: 0, side: "right" as "left" | "right", bx: 0, by: 0, reduce: false });
+  const bubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const say = useCallback((text: string, left: boolean, ms = 2600) => {
+    if (window.innerWidth < 1024) return;
+    if (bubbleTimer.current) clearTimeout(bubbleTimer.current);
+    setBubble({ text, left });
+    bubbleTimer.current = setTimeout(() => setBubble(null), ms);
   }, []);
 
-  // Measure the path and sample it so scroll position maps to a length.
   useEffect(() => {
-    const p = pathRef.current;
-    if (!p || !geo) return;
-    const total = p.getTotalLength();
-    setLen(total);
-    const N = 600;
-    samples.current = Array.from({ length: N + 1 }, (_, k) => {
-      const l = (total * k) / N;
-      return { l, y: p.getPointAtLength(l).y };
-    });
-  }, [geo]);
+    st.current.reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let tops: number[] = [];
+    let heroEnd = 0;
+    let w = window.innerWidth;
+    let vh = window.innerHeight;
+    let sz = 64;
 
-  useEffect(() => {
-    if (!geo || !len) return;
-    const host = svgRef.current?.parentElement;
-    const onScroll = () => {
-      if (!host) return;
-      const hostTop = host.getBoundingClientRect().top + window.scrollY;
-      const readY = window.scrollY + window.innerHeight * 0.6 - hostTop;
-      const s = samples.current;
-      let l = 0;
-      for (let k = 0; k < s.length; k++) {
-        if (s[k].y <= readY) l = s[k].l;
-        else break;
-      }
-      target.set(l);
-      const count = geo.nodes.filter((n) => n.y <= readY).length;
-      if (count !== litRef.current) {
-        litRef.current = count;
-        setLit(count);
-      }
+    const measure = () => {
+      w = window.innerWidth;
+      vh = window.innerHeight;
+      tops = STOPS.map((s) => {
+        const el = document.getElementById(s.id);
+        return el ? el.getBoundingClientRect().top + window.scrollY : Number.POSITIVE_INFINITY;
+      });
+      heroEnd = Number.isFinite(tops[0]) ? tops[0] : vh;
+      const desktop = w >= 1024;
+      const gutter = desktop ? (w - Math.min(1280, w - 96)) / 2 : 0;
+      sz = desktop ? Math.round(Math.min(96, Math.max(48, gutter * 0.85))) : 40;
+      setSize(sz);
+      setClickable(desktop && gutter >= 72);
+      update();
     };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [geo, len, target]);
 
-  useMotionValueEvent(drawn, "change", (v) => {
-    const p = pathRef.current;
-    if (!p || !len) return;
-    const at = Math.min(len, Math.max(0, v));
-    const pt = p.getPointAtLength(at);
-    const ahead = p.getPointAtLength(Math.min(len, at + 6));
-    botX.set(pt.x);
-    botY.set(pt.y);
-    const dx = ahead.x - pt.x;
-    const dy = ahead.y - pt.y;
-    const mag = Math.hypot(dx, dy) || 1;
-    // Eyes look where the trace is heading; the head leans into crossings.
-    lookX.set((dx / mag) * 2.4);
-    lookY.set((dy / mag) * 1.6);
-    tilt.set(Math.abs(dx) > Math.abs(dy) ? Math.sign(dx) * 12 : 0);
-  });
+    const parkX = (side: "left" | "right") => {
+      const desktop = w >= 1024;
+      const gutter = desktop ? (w - Math.min(1280, w - 96)) / 2 : 0;
+      const inset = desktop ? Math.max(sz / 2 + 8, gutter / 2) : sz / 2 + 4;
+      return side === "left" ? inset : w - inset;
+    };
+    const parkY = () => (w >= 1024 ? vh * 0.58 : vh * 0.8);
+
+    const update = () => {
+      const s = st.current;
+      const mid = window.scrollY + vh * 0.55;
+      const band = vh * 0.5;
+      const sideOf = (k: number): "left" | "right" => (k % 2 === 0 ? "right" : "left");
+
+      // Hidden in the hero; fades in as About arrives.
+      opacity.set(window.scrollY + vh * 0.85 < heroEnd ? 0 : 1);
+
+      // Which stop are we parked at, or which hop are we in the middle of?
+      let parked = 0;
+      let hop = -1;
+      let f = 0;
+      for (let j = 1; j < tops.length; j++) {
+        const start = tops[j] - band / 2;
+        const t = (mid - start) / band;
+        if (t >= 1) parked = j;
+        else if (t > 0) {
+          hop = j;
+          f = t;
+          break;
+        }
+      }
+
+      const py = parkY();
+      if (s.reduce) {
+        x.set(parkX("right"));
+        y.set(py);
+        scale.set(1);
+        rotate.set(0);
+      } else if (hop > 0) {
+        const from = parkX(sideOf(hop - 1));
+        const to = parkX(sideOf(hop));
+        const e = ease(f);
+        const arc = Math.sin(Math.PI * f);
+        const dir = to > from ? 1 : -1;
+        x.set(from + (to - from) * e);
+        y.set(py - arc * vh * 0.24);
+        scale.set(1 + arc * 0.6);
+        rotate.set(dir * 360 * e);
+      } else {
+        // Parked: gently breathe with the scroll so it always feels alive.
+        const breathe = Math.sin(window.scrollY / 90) * 0.07;
+        x.set(parkX(sideOf(parked)));
+        y.set(py + Math.sin(window.scrollY / 140) * 6);
+        scale.set(1 + breathe);
+        rotate.set(Math.round(rotate.get() / 360) * 360 + Math.sin(window.scrollY / 110) * 6);
+      }
+
+      const flying = hop > 0;
+      const side = sideOf(hop > 0 ? hop : parked);
+      s.side = side;
+      s.bx = x.get();
+      s.by = y.get();
+
+      // Startled by very fast scrolling.
+      const now = performance.now();
+      const v = Math.abs(window.scrollY - s.lastY) / Math.max(1, now - s.lastT);
+      s.lastY = window.scrollY;
+      s.lastT = now;
+      if (v > 4.5) s.startled = now + 700;
+
+      const nextMood: Mood = now < s.startled || flying ? "whoa" : STOPS[parked].mood;
+      setMood((m) => (m === nextMood ? m : nextMood));
+
+      if (!flying && parked !== s.stop && window.scrollY + vh * 0.85 >= heroEnd) {
+        s.stop = parked;
+        say(STOPS[parked].say, side === "right");
+      }
+      if (flying && bubbleTimer.current) {
+        clearTimeout(bubbleTimer.current);
+        setBubble(null);
+      }
+      s.flying = flying;
+    };
+
+    const onMouse = (e: MouseEvent) => {
+      const s = st.current;
+      const dx = e.clientX - s.bx;
+      const dy = e.clientY - s.by;
+      const d = Math.hypot(dx, dy) || 1;
+      lookX.set((dx / d) * 3);
+      lookY.set((dy / d) * 2.2);
+    };
+
+    measure();
+    const t = setTimeout(measure, 1200);
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.body);
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", measure);
+    window.addEventListener("mousemove", onMouse, { passive: true });
+    return () => {
+      clearTimeout(t);
+      ro.disconnect();
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("mousemove", onMouse);
+    };
+  }, [x, y, scale, rotate, opacity, lookX, lookY, say]);
+
+  const onClick = () => {
+    setMood("love");
+    scale.set(1.35);
+    setTimeout(() => scale.set(1), 260);
+    say("Hey! Scroll and I'll show you around.", st.current.side === "right", 2200);
+  };
 
   return (
-    <svg
-      ref={svgRef}
-      aria-hidden
-      className="pointer-events-none absolute left-0 top-0 z-[6] hidden lg:block"
-      width={geo?.w ?? 0}
-      height={geo?.h ?? 0}
-    >
-      {geo && (
-        <>
-          <defs>
-            <linearGradient id="trace-gold" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#8a7550" />
-              <stop offset="50%" stopColor="#e8d6ae" />
-              <stop offset="100%" stopColor="#d7c7aa" />
-            </linearGradient>
-            <filter id="trace-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="4" result="b" />
-              <feMerge>
-                <feMergeNode in="b" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
-          {/* Unlit circuit: the full route, faint and dashed */}
-          <path d={geo.d} fill="none" stroke="rgba(215,199,170,0.12)" strokeWidth={1} strokeDasharray="3 7" />
-
-          {/* Lit signal, drawn up to your reading position */}
-          <motion.path
-            ref={pathRef}
-            d={geo.d}
-            fill="none"
-            stroke="url(#trace-gold)"
-            strokeWidth={1.5}
-            strokeLinejoin="round"
-            filter="url(#trace-glow)"
-            strokeDasharray={len || 1}
-            style={{ strokeDashoffset: dashOffset }}
-          />
-
-          {/* Section nodes */}
-          {geo.nodes.map((n, i) => {
-            const on = i < lit;
-            return (
-              <g key={n.id} transform={`translate(${n.x} ${n.y})`}>
-                {on && <circle r={10} fill="none" stroke="rgba(215,199,170,0.35)" className="trace-ping" />}
-                <rect
-                  x={-4.5}
-                  y={-4.5}
-                  width={9}
-                  height={9}
-                  transform="rotate(45)"
-                  fill={on ? "#d7c7aa" : "#0b0b0c"}
-                  stroke={on ? "#f5ecd9" : "rgba(215,199,170,0.35)"}
-                  strokeWidth={1}
-                  style={{ transition: "fill .5s, stroke .5s" }}
-                />
-              </g>
-            );
-          })}
-
-          {/* Byte, the little bot that rides the signal */}
-          {len > 0 && (
-            <motion.g style={{ x: botX, y: botY }}>
-              <circle r={26} fill="rgba(215,199,170,0.12)" />
-              <circle r={15} fill="rgba(232,214,174,0.18)" filter="url(#trace-glow)" />
-              <motion.g style={{ rotate: tilt }}>
-                <g className="bot-bob">
-                  {/* antenna */}
-                  <line x1={0} y1={-13} x2={0} y2={-19} stroke="#d7c7aa" strokeWidth={1.4} strokeLinecap="round" />
-                  <circle cx={0} cy={-21} r={2.4} fill="#fffaf0" className="bot-led" />
-                  {/* ears */}
-                  <rect x={-15} y={-6} width={3} height={7} rx={1.5} fill="#d7c7aa" />
-                  <rect x={12} y={-6} width={3} height={7} rx={1.5} fill="#d7c7aa" />
-                  {/* head */}
-                  <rect x={-12} y={-13} width={24} height={21} rx={7} fill="#17140f" stroke="#e8d6ae" strokeWidth={1.3} />
-                  {/* visor */}
-                  <rect x={-8.5} y={-8.5} width={17} height={10.5} rx={4.5} fill="#050505" />
-                  {/* eyes follow the direction of travel */}
-                  <motion.g style={{ x: lookX, y: lookY }} className="bot-blink">
-                    <rect x={-5.2} y={-6} width={3.4} height={5} rx={1.7} fill="#f5ecd9" />
-                    <rect x={1.8} y={-6} width={3.4} height={5} rx={1.7} fill="#f5ecd9" />
-                  </motion.g>
-                  {/* smile */}
-                  <path d="M -3 4.2 Q 0 6.4 3 4.2" fill="none" stroke="#d7c7aa" strokeWidth={1.2} strokeLinecap="round" />
-                </g>
-              </motion.g>
-            </motion.g>
+    <motion.div aria-hidden className="pointer-events-none fixed left-0 top-0 z-[45]" style={{ x: sx, y: sy, opacity }}>
+      <div className="relative" style={{ width: 0, height: 0 }}>
+        <AnimatePresence>
+          {bubble && (
+            <motion.div
+              key={bubble.text}
+              initial={{ opacity: 0, scale: 0.8, y: 6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 420, damping: 28 }}
+              className={`absolute w-max max-w-[240px] rounded-2xl border border-[#d7c7aa]/40 bg-[#0b0b0c]/90 px-3 py-1.5 font-display text-[11px] tracking-wide text-[#f5ecd9] shadow-[0_8px_30px_rgba(0,0,0,0.5)] backdrop-blur ${
+                bubble.left ? "origin-right" : "origin-left"
+              }`}
+              style={{
+                top: -size * 1.25,
+                ...(bubble.left ? { right: -size * 0.35 } : { left: -size * 0.35 })
+              }}
+            >
+              {bubble.text}
+            </motion.div>
           )}
-        </>
-      )}
+        </AnimatePresence>
+        <motion.button
+          type="button"
+          tabIndex={-1}
+          onClick={onClick}
+          className={`absolute block ${clickable ? "pointer-events-auto cursor-pointer" : ""}`}
+          style={{ width: size, height: size * 1.1, left: -size / 2, top: -size * 0.55, scale, rotate }}
+        >
+          <ByteFace mood={mood} lookX={lookX} lookY={lookY} />
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
+function ByteFace({ mood, lookX, lookY }: { mood: Mood; lookX: MotionValue<number>; lookY: MotionValue<number> }) {
+  const eyeFill = "#f5ecd9";
+  const L = -8;
+  const R = 8;
+  const EY = -3;
+  const eyes = (() => {
+    switch (mood) {
+      case "happy":
+        return (
+          <g fill="none" stroke={eyeFill} strokeWidth={2.2} strokeLinecap="round">
+            <path d={`M ${L - 3.5} ${EY + 1} Q ${L} ${EY - 4} ${L + 3.5} ${EY + 1}`} />
+            <path d={`M ${R - 3.5} ${EY + 1} Q ${R} ${EY - 4} ${R + 3.5} ${EY + 1}`} />
+          </g>
+        );
+      case "star":
+        return (
+          <g fill="#ffe6a3">
+            {[L, R].map((cx) => (
+              <path
+                key={cx}
+                transform={`translate(${cx} ${EY})`}
+                d="M0 -4.6 L1.3 -1.4 L4.6 -1.4 L1.9 0.6 L2.9 4 L0 2 L-2.9 4 L-1.9 0.6 L-4.6 -1.4 L-1.3 -1.4 Z"
+              />
+            ))}
+          </g>
+        );
+      case "love":
+        return (
+          <g fill="#ff8fa3">
+            {[L, R].map((cx) => (
+              <path key={cx} transform={`translate(${cx} ${EY})`} d="M0 3.6 C-5 0 -4.5 -4 -2 -4 C-0.8 -4 0 -3 0 -2 C0 -3 0.8 -4 2 -4 C4.5 -4 5 0 0 3.6 Z" />
+            ))}
+          </g>
+        );
+      case "cool":
+        return (
+          <g>
+            <rect x={L - 5.5} y={EY - 3.5} width={11} height={7} rx={2.5} fill="#050505" stroke={eyeFill} strokeWidth={1} />
+            <rect x={R - 5.5} y={EY - 3.5} width={11} height={7} rx={2.5} fill="#050505" stroke={eyeFill} strokeWidth={1} />
+            <line x1={L + 5.5} y1={EY - 1} x2={R - 5.5} y2={EY - 1} stroke={eyeFill} strokeWidth={1.2} />
+            <line x1={L - 3} y1={EY - 2} x2={L} y2={EY - 2} stroke="#ffffff" strokeOpacity={0.6} strokeWidth={1} />
+          </g>
+        );
+      case "whoa":
+        return (
+          <g fill="none" stroke={eyeFill} strokeWidth={1.8}>
+            <circle cx={L} cy={EY} r={4} />
+            <circle cx={R} cy={EY} r={4} />
+            <circle cx={L} cy={EY} r={1.2} fill={eyeFill} />
+            <circle cx={R} cy={EY} r={1.2} fill={eyeFill} />
+          </g>
+        );
+      case "wink":
+        return (
+          <motion.g style={{ x: lookX, y: lookY }}>
+            <rect x={L - 2.5} y={EY - 4} width={5} height={7.5} rx={2.5} fill={eyeFill} />
+            <path d={`M ${R - 3.5} ${EY} Q ${R} ${EY + 3} ${R + 3.5} ${EY}`} fill="none" stroke={eyeFill} strokeWidth={2.2} strokeLinecap="round" />
+          </motion.g>
+        );
+      case "focus":
+        return (
+          <motion.g style={{ x: lookX, y: lookY }} fill={eyeFill}>
+            <rect x={L - 3.5} y={EY - 1.5} width={7} height={3.2} rx={1.6} />
+            <rect x={R - 3.5} y={EY - 1.5} width={7} height={3.2} rx={1.6} />
+          </motion.g>
+        );
+      case "curious":
+        return (
+          <motion.g style={{ x: lookX, y: lookY }} fill={eyeFill}>
+            <circle cx={L} cy={EY} r={3.8} />
+            <circle cx={R} cy={EY - 0.5} r={2.4} />
+          </motion.g>
+        );
+      case "excited":
+      default:
+        return (
+          <motion.g style={{ x: lookX, y: lookY }} className="bot-blink">
+            <rect x={L - 2.8} y={EY - 4.5} width={5.6} height={8.5} rx={2.8} fill={eyeFill} />
+            <rect x={R - 2.8} y={EY - 4.5} width={5.6} height={8.5} rx={2.8} fill={eyeFill} />
+            <circle cx={L + 1} cy={EY - 2.4} r={1.1} fill="#050505" />
+            <circle cx={R + 1} cy={EY - 2.4} r={1.1} fill="#050505" />
+          </motion.g>
+        );
+    }
+  })();
+
+  const mouth = (() => {
+    switch (mood) {
+      case "whoa":
+        return <ellipse cx={0} cy={8} rx={2.6} ry={3.2} fill="#050505" stroke="#d7c7aa" strokeWidth={1.2} />;
+      case "excited":
+      case "star":
+      case "love":
+        return <path d="M -5.5 5.5 Q 0 12 5.5 5.5 Z" fill="#d7c7aa" />;
+      case "focus":
+        return <line x1={-3.5} y1={7} x2={3.5} y2={7} stroke="#d7c7aa" strokeWidth={1.6} strokeLinecap="round" />;
+      case "curious":
+        return <path d="M -3 7.5 Q 1 5.5 4 8" fill="none" stroke="#d7c7aa" strokeWidth={1.6} strokeLinecap="round" />;
+      default:
+        return <path d="M -4.5 6 Q 0 10 4.5 6" fill="none" stroke="#d7c7aa" strokeWidth={1.8} strokeLinecap="round" />;
+    }
+  })();
+
+  const blush = mood === "love" || mood === "happy" || mood === "wink";
+
+  return (
+    <svg viewBox="-32 -38 64 70" width="100%" height="100%" className="overflow-visible drop-shadow-[0_6px_18px_rgba(0,0,0,0.55)]">
+      <defs>
+        <radialGradient id="byte-glow">
+          <stop offset="0%" stopColor="rgba(232,214,174,0.45)" />
+          <stop offset="100%" stopColor="rgba(232,214,174,0)" />
+        </radialGradient>
+        <linearGradient id="byte-shell" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2a241a" />
+          <stop offset="100%" stopColor="#100d09" />
+        </linearGradient>
+      </defs>
+      <circle r={34} fill="url(#byte-glow)" />
+      <g className="bot-bob">
+        <line x1={0} y1={-21} x2={0} y2={-30} stroke="#d7c7aa" strokeWidth={2} strokeLinecap="round" />
+        <circle cx={0} cy={-32} r={3.4} fill={mood === "love" ? "#ff8fa3" : "#fffaf0"} className="bot-led" />
+        <rect x={-29} y={-8} width={5} height={13} rx={2.5} fill="#d7c7aa" />
+        <rect x={24} y={-8} width={5} height={13} rx={2.5} fill="#d7c7aa" />
+        <rect x={-25} y={-21} width={50} height={40} rx={14} fill="url(#byte-shell)" stroke="#e8d6ae" strokeWidth={1.8} />
+        <rect x={-19} y={-14} width={38} height={27} rx={9} fill="#050505" />
+        <path d="M -16 -11 Q -10 -13 -4 -11" stroke="#ffffff" strokeOpacity={0.12} strokeWidth={2} fill="none" strokeLinecap="round" />
+        {eyes}
+        {mouth}
+        {blush && (
+          <g fill="#ff8fa3" opacity={0.45}>
+            <ellipse cx={-14} cy={5} rx={2.6} ry={1.6} />
+            <ellipse cx={14} cy={5} rx={2.6} ry={1.6} />
+          </g>
+        )}
+      </g>
     </svg>
   );
 }

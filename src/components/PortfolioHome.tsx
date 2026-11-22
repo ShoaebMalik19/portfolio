@@ -38,7 +38,7 @@ import { projects, ribbonShots, type Project } from "@/data/projects";
 import { wins, internships, clientWork, type Role, type ExtLink } from "@/data/profile";
 import { Menu, X } from "lucide-react";
 import { ProjectBento } from "@/components/ProjectBento";
-import { ScrollJourney, CountUp, RevealWords, ScrollBanner, CircuitTrace } from "@/components/ScrollFX";
+import { ScrollJourney, CountUp, RevealWords, ScrollBanner, EdgeLight, RoamingBot } from "@/components/ScrollFX";
 import { FreelanceServices, FreelanceFAQ } from "@/components/Freelance";
 import { Cormorant_Garamond } from "next/font/google";
 
@@ -197,7 +197,8 @@ export function PortfolioHome() {
     <main className="relative">
       <CursorGlow />
       <ScrollJourney />
-      <CircuitTrace />
+      <EdgeLight />
+      <RoamingBot />
       <TopNav />
       <Hero />
 
@@ -900,11 +901,17 @@ function ExperienceSplit() {
         ))}
       </div>
 
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-8">
-        {[...groups].reverse().map((g) => (
+      {/* Laptop: client work as a full row of three, internships as a full row of two */}
+      <div className="grid gap-12 lg:gap-16">
+        {groups.map((g) => (
           // min-w-0: a grid item otherwise grows to fit the rail's full scroll width.
           <div key={g.key} className={`min-w-0 ${tab === g.key ? "" : "hidden lg:block"}`}>
-            <RoleColumn title={g.title} note={g.note} roles={g.roles} />
+            <RoleColumn
+              title={g.title}
+              note={g.note}
+              roles={g.roles}
+              desktopGrid={g.key === "client" ? "lg:grid-cols-3 lg:gap-4" : "lg:grid-cols-2 lg:gap-4"}
+            />
           </div>
         ))}
       </div>
@@ -912,14 +919,14 @@ function ExperienceSplit() {
   );
 }
 
-function RoleColumn({ title, note, roles }: { title: string; note: string; roles: Role[] }) {
+function RoleColumn({ title, note, roles, desktopGrid }: { title: string; note: string; roles: Role[]; desktopGrid: string }) {
   return (
     <div>
       <div className="mb-5 hidden items-end justify-between gap-4 border-b border-accent/30 pb-3 lg:flex">
         <h3 className="font-display text-sm uppercase tracking-[0.28em] text-accent">{title}</h3>
         <p className="text-right text-[11px] uppercase tracking-[0.16em] text-secondary/70">{note}</p>
       </div>
-      <SwipeRail label={title} desktopGrid="lg:grid-cols-1 lg:gap-3">
+      <SwipeRail label={title} desktopGrid={desktopGrid}>
         {roles.map((r, i) => (
           <motion.article
             key={r.org}
@@ -928,7 +935,7 @@ function RoleColumn({ title, note, roles }: { title: string; note: string; roles
             whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
             viewport={{ once: true, margin: "-40px" }}
             transition={{ delay: i * 0.06, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="spot group card-premium overflow-hidden border border-border bg-card transition duration-300 hover:border-accent/40"
+            className="spot group card-premium flex h-full flex-col overflow-hidden border border-border bg-card transition duration-300 hover:border-accent/40"
           >
             {r.image && (
               <div className="relative h-32 overflow-hidden border-b border-border sm:h-36 lg:h-40">
