@@ -330,3 +330,17 @@ body::before {
   color: transparent;
   -webkit-text-stroke: 1px rgba(215, 199, 170, 0.35);
 }
+
+/* ── Circuit trace node pulse ── */
+.trace-ping {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: trace-ping 2.4s ease-out infinite;
+}
+@keyframes trace-ping {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trace-ping { animation: none; }
+}

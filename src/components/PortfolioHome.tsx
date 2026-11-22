@@ -38,7 +38,7 @@ import {
 import { projects, ribbonShots, type Project } from "@/data/projects";
 import { wins, internships, clientWork, type Role, type ExtLink } from "@/data/profile";
 import { Menu, X } from "lucide-react";
-import { ScrollJourney, CountUp, RevealWords, ScrollBanner, FlyingOrb } from "@/components/ScrollFX";
+import { ScrollJourney, CountUp, RevealWords, ScrollBanner, CircuitTrace } from "@/components/ScrollFX";
 import { FreelanceServices, FreelanceFAQ } from "@/components/Freelance";
 import { Cormorant_Garamond } from "next/font/google";
 
@@ -197,7 +197,7 @@ export function PortfolioHome() {
     <main className="relative">
       <CursorGlow />
       <ScrollJourney />
-      <FlyingOrb />
+      <CircuitTrace />
       <TopNav />
       <Hero />
 
@@ -1098,7 +1098,7 @@ function PinnedProjects() {
 
   return (
     <div ref={wrapRef} className="relative -mx-12" style={{ height: `${100 + projects.length * 32}vh` }}>
-      <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+      <div className="sticky top-0 z-[7] flex h-screen flex-col justify-center overflow-hidden bg-bg-projects">
         <div className="mb-8 flex items-end justify-between px-12">
           <p className="flex items-baseline font-serif text-[7rem] leading-none text-primary">
             {String(current).padStart(2, "0")}

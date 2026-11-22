@@ -5,6 +5,7 @@ import {
   animate,
   motion,
   useInView,
+  useMotionValue,
   useMotionValueEvent,
   useReducedMotion,
   useScroll,
@@ -12,100 +13,17 @@ import {
   useTransform
 } from "framer-motion";
 
-/* Sections the travelling orb stops at, in page order. */
-const STOPS = [
-  { id: "about", label: "About" },
-  { id: "wins", label: "Wins" },
-  { id: "experience", label: "Experience" },
-  { id: "services", label: "Hire me" },
-  { id: "projects", label: "Projects" },
-  { id: "progress", label: "Credentials" },
-  { id: "expertise", label: "Expertise" },
-  { id: "faq", label: "FAQ" },
-  { id: "contact", label: "Contact" }
-];
 
-/*
-  SCROLL JOURNEY
-  A glowing gold orb rides a rail down the left edge as you scroll, like a
-  ball rolling down the page. Each section is a stop on the rail; the stop
-  you're in lights up and names itself. Phones get a thin progress bar.
-*/
+/* Thin gold reading-progress bar across the top of the screen. */
 export function ScrollJourney() {
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 24, mass: 0.4 });
-  const top = useTransform(progress, [0, 1], ["0%", "100%"]);
-  const [stops, setStops] = useState<{ id: string; label: string; at: number }[]>([]);
-  const [active, setActive] = useState("");
-
-  useEffect(() => {
-    const measure = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      if (max <= 0) return;
-      setStops(
-        STOPS.flatMap((s) => {
-          const el = document.getElementById(s.id);
-          return el ? [{ ...s, at: Math.min(1, Math.max(0, (el.offsetTop - 80) / max)) }] : [];
-        })
-      );
-    };
-    measure();
-    const t = setTimeout(measure, 1500);
-    window.addEventListener("resize", measure);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener("resize", measure);
-    };
-  }, []);
-
-  useMotionValueEvent(scrollYProgress, "change", (v) => {
-    let cur = "";
-    for (const s of stops) if (v >= s.at - 0.002) cur = s.id;
-    setActive(cur);
-  });
-
   return (
-    <>
-      {/* Phones and tablets: gold progress bar under the nav */}
-      <motion.div
-        aria-hidden
-        className="fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-[#8a7550] via-[#d7c7aa] to-[#f5ecd9] xl:hidden"
-        style={{ scaleX: progress }}
-      />
-
-      {/* Desktop: the rail */}
-      <nav
-        aria-label="Page progress"
-        className="pointer-events-none fixed bottom-[12vh] left-5 top-[16vh] z-40 hidden w-6 xl:block"
-      >
-        <div className="absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2 bg-white/10" />
-        <motion.div
-          className="absolute left-1/2 top-0 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#d7c7aa]/70 to-[#d7c7aa]"
-          style={{ height: top }}
-        />
-        {stops.map((s) => (
-          <a
-            key={s.id}
-            href={`#${s.id}`}
-            className="group pointer-events-auto absolute left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center"
-            style={{ top: `${s.at * 100}%` }}
-          >
-            <span
-              className={`block h-2 w-2 rounded-full border transition-all duration-500 ${
-                active === s.id ? "scale-125 border-[#d7c7aa] bg-[#d7c7aa]" : "border-white/25 bg-[#0b0b0c]"
-              }`}
-            />
-            <span
-              className={`absolute left-5 -translate-x-1 whitespace-nowrap rounded-full bg-black/80 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.24em] opacity-0 backdrop-blur transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 ${
-                active === s.id ? "text-[#d7c7aa]" : "text-white/60"
-              }`}
-            >
-              {s.label}
-            </span>
-          </a>
-        ))}
-      </nav>
-    </>
+    <motion.div
+      aria-hidden
+      className="fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-[#8a7550] via-[#d7c7aa] to-[#f5ecd9]"
+      style={{ scaleX: progress }}
+    />
   );
 }
 
@@ -188,101 +106,191 @@ export function ScrollBanner({ text }: { text: string }) {
 }
 
 /*
-  FLYING ORB
-  A metallic gold ball that swoops left and right across the whole page as
-  you scroll, with a comet trail of lagging ghosts. It appears once you
-  leave the hero and never blocks clicks.
+  CIRCUIT TRACE
+  A gold signal line that draws itself down the page as you read, like a
+  trace on a circuit board. It runs only in the side margins, switches
+  sides through the empty padding at the top of each section with 45°
+  circuit bends, and lights a node as it reaches each section.
+  The tip stays level with your reading position (60% down the screen).
+  Desktop only; phones keep the progress bar.
 */
-export function FlyingOrb() {
-  const { scrollYProgress } = useScroll();
-  const p = useSpring(scrollYProgress, { stiffness: 70, damping: 18, mass: 0.6 });
-  const [vw, setVw] = useState(1440);
+const TRACE_IDS = ["about", "wins", "experience", "services", "projects", "progress", "expertise", "faq", "contact"];
 
+type Node = { x: number; y: number; id: string };
+
+export function CircuitTrace() {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const pathRef = useRef<SVGPathElement>(null);
+  const [geo, setGeo] = useState<{ w: number; h: number; d: string; nodes: Node[] } | null>(null);
+  const [len, setLen] = useState(0);
+  const samples = useRef<{ l: number; y: number }[]>([]);
+  const target = useMotionValue(0);
+  const drawn = useSpring(target, { stiffness: 90, damping: 22, mass: 0.5 });
+  const dashOffset = useTransform(drawn, (v) => Math.max(0, len - v));
+  const [tip, setTip] = useState<{ x: number; y: number } | null>(null);
+  const [lit, setLit] = useState(0);
+
+  // Build the path from where the sections actually are.
   useEffect(() => {
-    const on = () => setVw(window.innerWidth);
-    on();
-    window.addEventListener("resize", on);
-    return () => window.removeEventListener("resize", on);
+    const host = svgRef.current?.parentElement;
+    if (!host) return;
+    const build = () => {
+      const w = host.clientWidth;
+      const h = host.scrollHeight;
+      const els = TRACE_IDS.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+      if (els.length < 2 || w < 1024) return setGeo(null);
+      const hostTop = host.getBoundingClientRect().top + window.scrollY;
+      // Gutter centre: halfway between the page edge and the content column.
+      const content = Math.min(1280, w - 96);
+      const gutter = Math.max(18, (w - content) / 4);
+      const L = gutter;
+      const R = w - gutter;
+      const bend = 28;
+      const nodes: Node[] = [];
+      let side = L;
+      let d = "";
+      els.forEach((el, i) => {
+        const top = el.getBoundingClientRect().top + window.scrollY - hostTop;
+        const y = top + 44; // inside the section's top padding, above any heading
+        if (i === 0) {
+          d = `M ${side} ${y}`;
+        } else {
+          const next = side === L ? R : L;
+          const dir = next > side ? 1 : -1;
+          // run down the margin, bend 45° into the crossing, cross, bend back down
+          d += ` L ${side} ${y - bend} L ${side + dir * bend} ${y} L ${next - dir * bend} ${y} L ${next} ${y + bend}`;
+          side = next;
+        }
+        nodes.push({ x: side, y: i === 0 ? y : y + bend, id: el.id });
+      });
+      const lastEl = els[els.length - 1];
+      const end = lastEl.getBoundingClientRect().bottom + window.scrollY - hostTop - 60;
+      d += ` L ${side} ${end}`;
+      setGeo({ w, h, d, nodes });
+    };
+    build();
+    const ro = new ResizeObserver(() => build());
+    ro.observe(host);
+    window.addEventListener("resize", build);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", build);
+    };
   }, []);
 
-  const amp = vw < 768 ? vw * 0.34 : vw * 0.4;
-  const x = useTransform(p, (v) => Math.sin(v * Math.PI * 7) * amp);
-  const y = useTransform(p, (v) => Math.cos(v * Math.PI * 4) * 16); // vh
-  const yv = useTransform(y, (v) => `${v}vh`);
-  const rotate = useTransform(p, [0, 1], [0, 2160]);
-  const scale = useTransform(p, (v) => 1 + Math.abs(Math.cos(v * Math.PI * 7)) * 0.35);
-  const opacity = useTransform(scrollYProgress, [0.04, 0.09, 0.97, 1], [0, 1, 1, 0.4]);
+  // Measure the path and sample it so scroll position maps to a length.
+  useEffect(() => {
+    const p = pathRef.current;
+    if (!p || !geo) return;
+    const total = p.getTotalLength();
+    setLen(total);
+    const N = 600;
+    samples.current = Array.from({ length: N + 1 }, (_, k) => {
+      const l = (total * k) / N;
+      return { l, y: p.getPointAtLength(l).y };
+    });
+  }, [geo]);
 
-  const ghosts = [0.55, 0.4, 0.28, 0.18, 0.1];
-  const g1x = useSpring(x, { stiffness: 140, damping: 22 });
-  const g2x = useSpring(x, { stiffness: 90, damping: 22 });
-  const g3x = useSpring(x, { stiffness: 60, damping: 22 });
-  const g4x = useSpring(x, { stiffness: 40, damping: 22 });
-  const g5x = useSpring(x, { stiffness: 26, damping: 22 });
-  const g1y = useSpring(yv, { stiffness: 140, damping: 22 });
-  const g2y = useSpring(yv, { stiffness: 90, damping: 22 });
-  const g3y = useSpring(yv, { stiffness: 60, damping: 22 });
-  const g4y = useSpring(yv, { stiffness: 40, damping: 22 });
-  const g5y = useSpring(yv, { stiffness: 26, damping: 22 });
-  const trail = [
-    [g1x, g1y],
-    [g2x, g2y],
-    [g3x, g3y],
-    [g4x, g4y],
-    [g5x, g5y]
-  ] as const;
+  useEffect(() => {
+    if (!geo || !len) return;
+    const host = svgRef.current?.parentElement;
+    const onScroll = () => {
+      if (!host) return;
+      const hostTop = host.getBoundingClientRect().top + window.scrollY;
+      const readY = window.scrollY + window.innerHeight * 0.6 - hostTop;
+      const s = samples.current;
+      let l = 0;
+      for (let k = 0; k < s.length; k++) {
+        if (s[k].y <= readY) l = s[k].l;
+        else break;
+      }
+      target.set(l);
+      setLit(geo.nodes.filter((n) => n.y <= readY).length);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [geo, len, target]);
 
-  const size = vw < 768 ? 34 : 58;
+  useMotionValueEvent(drawn, "change", (v) => {
+    const p = pathRef.current;
+    if (!p || !len) return;
+    const pt = p.getPointAtLength(Math.min(len, Math.max(0, v)));
+    setTip({ x: pt.x, y: pt.y });
+  });
 
   return (
-    <motion.div aria-hidden className="pointer-events-none fixed left-1/2 top-[52vh] z-[45] mix-blend-screen motion-reduce:hidden" style={{ opacity }}>
-      {trail.map(([tx, ty], i) => (
-        <motion.span
-          key={i}
-          className="absolute rounded-full"
-          style={{
-            x: tx,
-            y: ty,
-            width: size * (1 - i * 0.12),
-            height: size * (1 - i * 0.12),
-            marginLeft: -(size * (1 - i * 0.12)) / 2,
-            marginTop: -(size * (1 - i * 0.12)) / 2,
-            opacity: ghosts[i],
-            background: "radial-gradient(circle, rgba(232,214,174,0.55), rgba(215,199,170,0) 70%)",
-            filter: `blur(${2 + i * 2}px)`
-          }}
-        />
-      ))}
-      <motion.span className="absolute" style={{ x, y: yv, scale }}>
-        <span
-          className="absolute rounded-full"
-          style={{
-            width: size * 3,
-            height: size * 3,
-            left: -size * 1.5,
-            top: -size * 1.5,
-            background: "radial-gradient(circle, rgba(215,199,170,0.35), transparent 65%)",
-            filter: "blur(10px)"
-          }}
-        />
-        <motion.span
-          className="absolute block rounded-full"
-          style={{
-            rotate,
-            width: size,
-            height: size,
-            left: -size / 2,
-            top: -size / 2,
-            background:
-              "radial-gradient(circle at 32% 28%, #fffaf0 0%, #f0dfb8 18%, #c9a96e 45%, #7a5f36 75%, #2e2312 100%)",
-            boxShadow: "0 0 40px rgba(215,199,170,0.65), inset -6px -8px 18px rgba(0,0,0,0.45)"
-          }}
-        >
-          {/* Seam lines so the spin reads like a ball */}
-          <span className="absolute inset-[18%] rounded-full border border-black/20" />
-          <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-black/15" />
-        </motion.span>
-      </motion.span>
-    </motion.div>
+    <svg
+      ref={svgRef}
+      aria-hidden
+      className="pointer-events-none absolute left-0 top-0 z-[6] hidden lg:block"
+      width={geo?.w ?? 0}
+      height={geo?.h ?? 0}
+    >
+      {geo && (
+        <>
+          <defs>
+            <linearGradient id="trace-gold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#8a7550" />
+              <stop offset="50%" stopColor="#e8d6ae" />
+              <stop offset="100%" stopColor="#d7c7aa" />
+            </linearGradient>
+            <filter id="trace-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="4" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {/* Unlit circuit: the full route, faint and dashed */}
+          <path d={geo.d} fill="none" stroke="rgba(215,199,170,0.12)" strokeWidth={1} strokeDasharray="3 7" />
+
+          {/* Lit signal, drawn up to your reading position */}
+          <motion.path
+            ref={pathRef}
+            d={geo.d}
+            fill="none"
+            stroke="url(#trace-gold)"
+            strokeWidth={1.5}
+            strokeLinejoin="round"
+            filter="url(#trace-glow)"
+            strokeDasharray={len || 1}
+            style={{ strokeDashoffset: dashOffset }}
+          />
+
+          {/* Section nodes */}
+          {geo.nodes.map((n, i) => {
+            const on = i < lit;
+            return (
+              <g key={n.id} transform={`translate(${n.x} ${n.y})`}>
+                {on && <circle r={10} fill="none" stroke="rgba(215,199,170,0.35)" className="trace-ping" />}
+                <rect
+                  x={-4.5}
+                  y={-4.5}
+                  width={9}
+                  height={9}
+                  transform="rotate(45)"
+                  fill={on ? "#d7c7aa" : "#0b0b0c"}
+                  stroke={on ? "#f5ecd9" : "rgba(215,199,170,0.35)"}
+                  strokeWidth={1}
+                  style={{ transition: "fill .5s, stroke .5s" }}
+                />
+              </g>
+            );
+          })}
+
+          {/* The travelling signal at the tip */}
+          {tip && len > 0 && (
+            <g transform={`translate(${tip.x} ${tip.y})`}>
+              <circle r={16} fill="rgba(215,199,170,0.18)" />
+              <circle r={7} fill="rgba(232,214,174,0.45)" filter="url(#trace-glow)" />
+              <circle r={3} fill="#fffaf0" />
+            </g>
+          )}
+        </>
+      )}
+    </svg>
   );
 }
