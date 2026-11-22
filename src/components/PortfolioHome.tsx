@@ -9,7 +9,6 @@ import {
   useScroll,
   useTransform,
   useMotionTemplate,
-  useMotionValueEvent,
   useReducedMotion,
   MotionConfig,
   AnimatePresence,
@@ -38,6 +37,7 @@ import {
 import { projects, ribbonShots, type Project } from "@/data/projects";
 import { wins, internships, clientWork, type Role, type ExtLink } from "@/data/profile";
 import { Menu, X } from "lucide-react";
+import { ProjectBento } from "@/components/ProjectBento";
 import { ScrollJourney, CountUp, RevealWords, ScrollBanner, CircuitTrace } from "@/components/ScrollFX";
 import { FreelanceServices, FreelanceFAQ } from "@/components/Freelance";
 import { Cormorant_Garamond } from "next/font/google";
@@ -215,9 +215,9 @@ export function PortfolioHome() {
       <FreelanceServices whatsappHref={WHATSAPP_PROJECT} />
       <ScrollBanner text="Websites · Web Apps · AI · Web3" />
 
-      <Section id="projects" eyebrow="04" title="Featured" accent="Projects" intro="Hackathon builds and side projects across AI, blockchain and the web, most of them live." bgClass="bg-bg-projects">
+      <Section id="projects" eyebrow="04" title="Featured" accent="Projects" intro="Hackathon builds and side projects across AI, blockchain and the web. Filter to see what is live." bgClass="bg-bg-projects">
         <div className="hidden lg:block">
-          <PinnedProjects />
+          <ProjectBento />
         </div>
         <div className="lg:hidden">
           <ProjectShowcase />
@@ -1065,60 +1065,6 @@ function FloatingAbout() {
 /* ══════════════════════════════════════════════════════════════
    HORIZONTAL PROJECT CAROUSEL  (no vertical scroll hijack)
 ══════════════════════════════════════════════════════════════ */
-/*
-  On desktop the Projects section pins to the screen and scrolling down
-  slides the whole row of project cards sideways, with a big counter.
-  Phones and tablets keep the swipe carousel.
-*/
-function PinnedProjects() {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [distance, setDistance] = useState(0);
-  const { scrollYProgress } = useScroll({ target: wrapRef, offset: ["start start", "end end"] });
-  const smooth = useSpring(scrollYProgress, { stiffness: 120, damping: 26, mass: 0.4 });
-  const x = useTransform(smooth, [0, 1], [0, -distance]);
-  const bar = useTransform(smooth, [0, 1], ["0%", "100%"]);
-  const [current, setCurrent] = useState(1);
-
-  useEffect(() => {
-    const measure = () => {
-      const t = trackRef.current;
-      if (t) setDistance(Math.max(0, t.scrollWidth - window.innerWidth + 96));
-    };
-    measure();
-    const id = setTimeout(measure, 800);
-    window.addEventListener("resize", measure);
-    return () => {
-      clearTimeout(id);
-      window.removeEventListener("resize", measure);
-    };
-  }, []);
-
-  useMotionValueEvent(smooth, "change", (v) => setCurrent(Math.min(projects.length, Math.floor(v * projects.length) + 1)));
-
-  return (
-    <div ref={wrapRef} className="relative -mx-12" style={{ height: `${100 + projects.length * 32}vh` }}>
-      <div className="sticky top-0 z-[7] flex h-screen flex-col justify-center overflow-hidden bg-bg-projects">
-        <div className="mb-8 flex items-end justify-between px-12">
-          <p className="flex items-baseline font-serif text-[7rem] leading-none text-primary">
-            {String(current).padStart(2, "0")}
-            <span className="ml-4 font-mono text-sm tracking-[0.3em] text-secondary">/ {String(projects.length).padStart(2, "0")}</span>
-          </p>
-          <p className="pb-4 font-mono text-[11px] uppercase tracking-[0.3em] text-secondary">Keep scrolling &darr;</p>
-        </div>
-        <motion.div ref={trackRef} style={{ x }} className="flex w-max gap-5 px-12">
-          {projects.map((project, index) => (
-            <ProjectCard key={project.name} project={project} index={index} />
-          ))}
-        </motion.div>
-        <div className="mx-12 mt-10 h-px bg-white/10">
-          <motion.div className="h-px bg-[#d7c7aa]" style={{ width: bar }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ProjectShowcase() {
   const trackRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);

@@ -344,3 +344,14 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .trace-ping { animation: none; }
 }
+
+/* ── Byte, the trace bot ── */
+.bot-bob { animation: bot-bob 2.2s ease-in-out infinite; }
+.bot-blink { animation: bot-blink 4.5s infinite; transform-box: fill-box; transform-origin: center; }
+.bot-led { animation: bot-led 1.6s ease-in-out infinite; }
+@keyframes bot-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes bot-blink { 0%, 92%, 100% { scale: 1 1; } 95% { scale: 1 0.1; } }
+@keyframes bot-led { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) {
+  .bot-bob, .bot-blink, .bot-led { animation: none; }
+}

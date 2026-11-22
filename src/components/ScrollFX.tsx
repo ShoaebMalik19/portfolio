@@ -125,10 +125,18 @@ export function CircuitTrace() {
   const [len, setLen] = useState(0);
   const samples = useRef<{ l: number; y: number }[]>([]);
   const target = useMotionValue(0);
-  const drawn = useSpring(target, { stiffness: 90, damping: 22, mass: 0.5 });
+  // Locked to the scroll position: no smoothing, so it never trails behind.
+  const drawn = target;
   const dashOffset = useTransform(drawn, (v) => Math.max(0, len - v));
-  const [tip, setTip] = useState<{ x: number; y: number } | null>(null);
+  // Bot position and expression live in motion values, so following the
+  // scroll never re-renders React.
+  const botX = useMotionValue(-100);
+  const botY = useMotionValue(-100);
+  const lookX = useSpring(0, { stiffness: 300, damping: 26 });
+  const lookY = useSpring(0, { stiffness: 300, damping: 26 });
+  const tilt = useSpring(0, { stiffness: 200, damping: 18 });
   const [lit, setLit] = useState(0);
+  const litRef = useRef(0);
 
   // Build the path from where the sections actually are.
   useEffect(() => {
@@ -145,23 +153,26 @@ export function CircuitTrace() {
       const gutter = Math.max(18, (w - content) / 4);
       const L = gutter;
       const R = w - gutter;
-      const bend = 28;
+      const bend = 22;
+      const span = 80;
       const nodes: Node[] = [];
       let side = L;
       let d = "";
       els.forEach((el, i) => {
         const top = el.getBoundingClientRect().top + window.scrollY - hostTop;
-        const y = top + 44; // inside the section's top padding, above any heading
+        const y = top; // the boundary between two sections
         if (i === 0) {
           d = `M ${side} ${y}`;
         } else {
           const next = side === L ? R : L;
           const dir = next > side ? 1 : -1;
           // run down the margin, bend 45° into the crossing, cross, bend back down
-          d += ` L ${side} ${y - bend} L ${side + dir * bend} ${y} L ${next - dir * bend} ${y} L ${next} ${y + bend}`;
+          // Glide across on a shallow slope spread over the section gap, so the
+          // signal travels across while you scroll instead of jumping.
+          d += ` L ${side} ${y - span - bend} L ${side + dir * bend} ${y - span} L ${next - dir * bend} ${y + span} L ${next} ${y + span + bend}`;
           side = next;
         }
-        nodes.push({ x: side, y: i === 0 ? y : y + bend, id: el.id });
+        nodes.push({ x: side, y: i === 0 ? y : y + span + bend, id: el.id });
       });
       const lastEl = els[els.length - 1];
       const end = lastEl.getBoundingClientRect().bottom + window.scrollY - hostTop - 60;
@@ -205,7 +216,11 @@ export function CircuitTrace() {
         else break;
       }
       target.set(l);
-      setLit(geo.nodes.filter((n) => n.y <= readY).length);
+      const count = geo.nodes.filter((n) => n.y <= readY).length;
+      if (count !== litRef.current) {
+        litRef.current = count;
+        setLit(count);
+      }
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -215,8 +230,18 @@ export function CircuitTrace() {
   useMotionValueEvent(drawn, "change", (v) => {
     const p = pathRef.current;
     if (!p || !len) return;
-    const pt = p.getPointAtLength(Math.min(len, Math.max(0, v)));
-    setTip({ x: pt.x, y: pt.y });
+    const at = Math.min(len, Math.max(0, v));
+    const pt = p.getPointAtLength(at);
+    const ahead = p.getPointAtLength(Math.min(len, at + 6));
+    botX.set(pt.x);
+    botY.set(pt.y);
+    const dx = ahead.x - pt.x;
+    const dy = ahead.y - pt.y;
+    const mag = Math.hypot(dx, dy) || 1;
+    // Eyes look where the trace is heading; the head leans into crossings.
+    lookX.set((dx / mag) * 2.4);
+    lookY.set((dy / mag) * 1.6);
+    tilt.set(Math.abs(dx) > Math.abs(dy) ? Math.sign(dx) * 12 : 0);
   });
 
   return (
@@ -281,13 +306,33 @@ export function CircuitTrace() {
             );
           })}
 
-          {/* The travelling signal at the tip */}
-          {tip && len > 0 && (
-            <g transform={`translate(${tip.x} ${tip.y})`}>
-              <circle r={16} fill="rgba(215,199,170,0.18)" />
-              <circle r={7} fill="rgba(232,214,174,0.45)" filter="url(#trace-glow)" />
-              <circle r={3} fill="#fffaf0" />
-            </g>
+          {/* Byte, the little bot that rides the signal */}
+          {len > 0 && (
+            <motion.g style={{ x: botX, y: botY }}>
+              <circle r={26} fill="rgba(215,199,170,0.12)" />
+              <circle r={15} fill="rgba(232,214,174,0.18)" filter="url(#trace-glow)" />
+              <motion.g style={{ rotate: tilt }}>
+                <g className="bot-bob">
+                  {/* antenna */}
+                  <line x1={0} y1={-13} x2={0} y2={-19} stroke="#d7c7aa" strokeWidth={1.4} strokeLinecap="round" />
+                  <circle cx={0} cy={-21} r={2.4} fill="#fffaf0" className="bot-led" />
+                  {/* ears */}
+                  <rect x={-15} y={-6} width={3} height={7} rx={1.5} fill="#d7c7aa" />
+                  <rect x={12} y={-6} width={3} height={7} rx={1.5} fill="#d7c7aa" />
+                  {/* head */}
+                  <rect x={-12} y={-13} width={24} height={21} rx={7} fill="#17140f" stroke="#e8d6ae" strokeWidth={1.3} />
+                  {/* visor */}
+                  <rect x={-8.5} y={-8.5} width={17} height={10.5} rx={4.5} fill="#050505" />
+                  {/* eyes follow the direction of travel */}
+                  <motion.g style={{ x: lookX, y: lookY }} className="bot-blink">
+                    <rect x={-5.2} y={-6} width={3.4} height={5} rx={1.7} fill="#f5ecd9" />
+                    <rect x={1.8} y={-6} width={3.4} height={5} rx={1.7} fill="#f5ecd9" />
+                  </motion.g>
+                  {/* smile */}
+                  <path d="M -3 4.2 Q 0 6.4 3 4.2" fill="none" stroke="#d7c7aa" strokeWidth={1.2} strokeLinecap="round" />
+                </g>
+              </motion.g>
+            </motion.g>
           )}
         </>
       )}
