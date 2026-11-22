@@ -35,7 +35,6 @@ export function ScrollJourney() {
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 24, mass: 0.4 });
   const top = useTransform(progress, [0, 1], ["0%", "100%"]);
-  const spin = useTransform(progress, [0, 1], [0, 1080]);
   const [stops, setStops] = useState<{ id: string; label: string; at: number }[]>([]);
   const [active, setActive] = useState("");
 
@@ -105,17 +104,6 @@ export function ScrollJourney() {
             </span>
           </a>
         ))}
-        {/* The orb */}
-        <motion.div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ top }}>
-          <span className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#d7c7aa]/25 blur-xl" />
-          <motion.span
-            className="relative block h-4 w-4 rounded-full shadow-[0_0_18px_rgba(215,199,170,0.9)]"
-            style={{
-              rotate: spin,
-              background: "conic-gradient(from 0deg, #f5ecd9, #a8916a, #f5ecd9, #6f5d3e, #f5ecd9)"
-            }}
-          />
-        </motion.div>
       </nav>
     </>
   );
@@ -196,5 +184,105 @@ export function ScrollBanner({ text }: { text: string }) {
         {text} · {text} · {text} ·
       </motion.p>
     </div>
+  );
+}
+
+/*
+  FLYING ORB
+  A metallic gold ball that swoops left and right across the whole page as
+  you scroll, with a comet trail of lagging ghosts. It appears once you
+  leave the hero and never blocks clicks.
+*/
+export function FlyingOrb() {
+  const { scrollYProgress } = useScroll();
+  const p = useSpring(scrollYProgress, { stiffness: 70, damping: 18, mass: 0.6 });
+  const [vw, setVw] = useState(1440);
+
+  useEffect(() => {
+    const on = () => setVw(window.innerWidth);
+    on();
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, []);
+
+  const amp = vw < 768 ? vw * 0.34 : vw * 0.4;
+  const x = useTransform(p, (v) => Math.sin(v * Math.PI * 7) * amp);
+  const y = useTransform(p, (v) => Math.cos(v * Math.PI * 4) * 16); // vh
+  const yv = useTransform(y, (v) => `${v}vh`);
+  const rotate = useTransform(p, [0, 1], [0, 2160]);
+  const scale = useTransform(p, (v) => 1 + Math.abs(Math.cos(v * Math.PI * 7)) * 0.35);
+  const opacity = useTransform(scrollYProgress, [0.04, 0.09, 0.97, 1], [0, 1, 1, 0.4]);
+
+  const ghosts = [0.55, 0.4, 0.28, 0.18, 0.1];
+  const g1x = useSpring(x, { stiffness: 140, damping: 22 });
+  const g2x = useSpring(x, { stiffness: 90, damping: 22 });
+  const g3x = useSpring(x, { stiffness: 60, damping: 22 });
+  const g4x = useSpring(x, { stiffness: 40, damping: 22 });
+  const g5x = useSpring(x, { stiffness: 26, damping: 22 });
+  const g1y = useSpring(yv, { stiffness: 140, damping: 22 });
+  const g2y = useSpring(yv, { stiffness: 90, damping: 22 });
+  const g3y = useSpring(yv, { stiffness: 60, damping: 22 });
+  const g4y = useSpring(yv, { stiffness: 40, damping: 22 });
+  const g5y = useSpring(yv, { stiffness: 26, damping: 22 });
+  const trail = [
+    [g1x, g1y],
+    [g2x, g2y],
+    [g3x, g3y],
+    [g4x, g4y],
+    [g5x, g5y]
+  ] as const;
+
+  const size = vw < 768 ? 34 : 58;
+
+  return (
+    <motion.div aria-hidden className="pointer-events-none fixed left-1/2 top-[52vh] z-[45] mix-blend-screen motion-reduce:hidden" style={{ opacity }}>
+      {trail.map(([tx, ty], i) => (
+        <motion.span
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            x: tx,
+            y: ty,
+            width: size * (1 - i * 0.12),
+            height: size * (1 - i * 0.12),
+            marginLeft: -(size * (1 - i * 0.12)) / 2,
+            marginTop: -(size * (1 - i * 0.12)) / 2,
+            opacity: ghosts[i],
+            background: "radial-gradient(circle, rgba(232,214,174,0.55), rgba(215,199,170,0) 70%)",
+            filter: `blur(${2 + i * 2}px)`
+          }}
+        />
+      ))}
+      <motion.span className="absolute" style={{ x, y: yv, scale }}>
+        <span
+          className="absolute rounded-full"
+          style={{
+            width: size * 3,
+            height: size * 3,
+            left: -size * 1.5,
+            top: -size * 1.5,
+            background: "radial-gradient(circle, rgba(215,199,170,0.35), transparent 65%)",
+            filter: "blur(10px)"
+          }}
+        />
+        <motion.span
+          className="absolute block rounded-full"
+          style={{
+            rotate,
+            width: size,
+            height: size,
+            left: -size / 2,
+            top: -size / 2,
+            background:
+              "radial-gradient(circle at 32% 28%, #fffaf0 0%, #f0dfb8 18%, #c9a96e 45%, #7a5f36 75%, #2e2312 100%)",
+            boxShadow: "0 0 40px rgba(215,199,170,0.65), inset -6px -8px 18px rgba(0,0,0,0.45)"
+          }}
+        >
+          {/* Seam lines so the spin reads like a ball */}
+          <span className="absolute inset-[18%] rounded-full border border-black/20" />
+          <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-black/15" />
+        </motion.span>
+      </motion.span>
+    </motion.div>
   );
 }
