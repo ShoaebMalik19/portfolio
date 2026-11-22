@@ -37,6 +37,8 @@ import {
 import { projects, ribbonShots, type Project } from "@/data/projects";
 import { wins, internships, clientWork, type Role, type ExtLink } from "@/data/profile";
 import { Menu, X } from "lucide-react";
+import { ScrollJourney, CountUp, RevealWords, ScrollBanner } from "@/components/ScrollFX";
+import { FreelanceServices, FreelanceFAQ } from "@/components/Freelance";
 import { Cormorant_Garamond } from "next/font/google";
 
 const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["600"] });
@@ -63,6 +65,7 @@ const NAV_LINKS = [
   { label: "About", href: "#about" },
   { label: "Wins", href: "#wins" },
   { label: "Experience", href: "#experience" },
+  { label: "Hire Me", href: "#services" },
   { label: "Projects", href: "#projects" },
   { label: "Progress Log", href: "#progress" },
   { label: "Expertise", href: "#expertise" },
@@ -192,6 +195,7 @@ export function PortfolioHome() {
     <MotionConfig reducedMotion="user">
     <main className="relative">
       <CursorGlow />
+      <ScrollJourney />
       <TopNav />
       <Hero />
 
@@ -206,6 +210,9 @@ export function PortfolioHome() {
         <ExperienceSplit />
       </Section>
 
+      <FreelanceServices whatsappHref={WHATSAPP_PROJECT} />
+      <ScrollBanner text="Websites · Web Apps · AI · Web3" />
+
       <Section id="projects" eyebrow="04" title="Featured" accent="Projects" intro="Hackathon builds and side projects across AI, blockchain and the web, most of them live." bgClass="bg-bg-projects">
         <ProjectShowcase />
       </Section>
@@ -218,12 +225,15 @@ export function PortfolioHome() {
         <ExpertiseGrid />
       </Section>
 
+      <FreelanceFAQ />
+      <ScrollBanner text="Let's build · Bengaluru" />
+
       <Section id="contact" eyebrow="07" title="Get in" accent="Touch" bgClass="bg-bg-contact">
         <ContactSection />
       </Section>
 
       <footer className="border-t border-border bg-bg-contact px-5 py-8 text-center font-display text-xs uppercase tracking-[0.32em] text-secondary/50 sm:px-8 lg:px-12 transition-colors duration-500">
-        Mohammed Shoaeb Malik
+        Mohammed Shoaeb Malik · Freelance web &amp; AI developer in Bengaluru, India
       </footer>
     </main>
     </MotionConfig>
@@ -307,15 +317,17 @@ function Hero() {
         transition={{ duration: 0.9, delay: 0.45, ease }}
         className="relative z-30 -mt-10 px-5 sm:px-8 lg:absolute lg:bottom-14 lg:left-12 lg:mt-0 lg:max-w-[520px] lg:px-0"
       >
-        <p className="font-mono text-[11px] uppercase tracking-[0.32em] text-secondary">Hi, I&rsquo;m Shoaeb</p>
-        <h1 className="mt-4 font-serif text-[clamp(2.7rem,5vw,4.8rem)] font-medium leading-[0.98] tracking-[-0.01em] text-primary [text-shadow:0_6px_40px_rgba(0,0,0,0.85)]">
+        <h1 className="font-serif text-[clamp(2.7rem,5vw,4.8rem)] font-medium leading-[0.98] tracking-[-0.01em] text-primary [text-shadow:0_6px_40px_rgba(0,0,0,0.85)]">
+          <span className="mb-4 block font-mono text-[11px] uppercase not-italic tracking-[0.32em] text-secondary [text-shadow:none]">
+            Hi, I&rsquo;m Mohammed Shoaeb Malik
+          </span>
           AI &amp; Full-Stack
           <br />
           <span className="italic text-accent">Developer</span>
         </h1>
         <p className="mt-4 max-w-[30rem] text-[15px] leading-7 text-secondary [text-shadow:0_2px_18px_rgba(0,0,0,0.9)]">
-          3&times; hackathon winner. I build AI-integrated web apps and blockchain products, and I make broken ones
-          work.
+          3&times; hackathon winner and freelance developer in Bangalore. I build AI-integrated web apps and
+          blockchain products, and I make broken ones work.
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <a
@@ -762,8 +774,9 @@ function WinsGrid() {
       {wins.map((w, i) => (
         <motion.article
           key={w.event}
-          initial={{ opacity: 0, y: 26 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          style={{ transformPerspective: 1200 }}
+          initial={{ opacity: 0, y: 80, rotateX: -24, scale: 0.92 }}
+          whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ delay: i * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="spot group card-premium relative flex flex-col overflow-hidden border border-border bg-card transition-all duration-500 hover:-translate-y-1 hover:border-accent/50"
@@ -893,8 +906,9 @@ function RoleColumn({ title, note, roles }: { title: string; note: string; roles
         {roles.map((r, i) => (
           <motion.article
             key={r.org}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            style={{ transformPerspective: 1200 }}
+            initial={{ opacity: 0, y: 60, rotateX: -18, scale: 0.95 }}
+            whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
             viewport={{ once: true, margin: "-40px" }}
             transition={{ delay: i * 0.06, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             className="spot group card-premium overflow-hidden border border-border bg-card transition duration-300 hover:border-accent/40"
@@ -1121,8 +1135,8 @@ function ProjectShowcase() {
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   return (
     <motion.article
-      initial={{ opacity: 0, y: 22 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, x: 80, rotateY: -14 }}
+      whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ delay: index * 0.04, duration: 0.52 }}
       onClick={() => {
@@ -1532,7 +1546,7 @@ function ProofStrip() {
             } ${i >= 2 ? "border-t border-border lg:border-t-0" : ""} ${i === 2 ? "lg:border-l lg:pl-5" : ""}`}
           >
             <span className="font-serif text-5xl leading-none text-primary transition-colors group-hover:text-accent sm:text-6xl">
-              {String(st.n).padStart(2, "0")}
+              <CountUp to={st.n} />
             </span>
             <span className="pb-1 font-mono text-[10px] uppercase leading-4 tracking-[0.2em] text-secondary">{st.label}</span>
           </a>
@@ -1572,11 +1586,13 @@ function Section({ id, eyebrow, title, accent, intro, children, bgClass = "" }: 
               {id === "progress" ? "credentials" : id}
             </p>
             <h2 className="mt-4 font-serif text-[2.7rem] font-medium leading-[0.98] text-primary sm:text-6xl lg:text-7xl">
-              {title}
+              <RevealWords text={title} />
               {accent && (
                 <>
                   {" "}
-                  <span className="italic text-accent">{accent}</span>
+                  <span className="italic text-accent">
+                    <RevealWords text={accent} />
+                  </span>
                 </>
               )}
             </h2>

@@ -324,3 +324,9 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .marquee-track { animation: none; }
 }
+
+/* ── Scroll banners ── */
+.banner-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(215, 199, 170, 0.35);
+}
