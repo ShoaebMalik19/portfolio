@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter, Mrs_Saint_Delafield, Space_Grotesk } from "next/font/google";
 import { ThemeProvider } from "@/components/providers";
 import { FAQ } from "@/data/faq";
+import { ALL_AREAS } from "@/data/areas";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
@@ -31,6 +32,10 @@ export const metadata: Metadata = {
     "freelance full stack developer Bangalore",
     "website developer in Bangalore",
     "web developer for small business Bangalore",
+    "website developer RT Nagar",
+    "web developer RT Nagar Bangalore",
+    "web developer Hebbal",
+    "website developer north Bangalore",
     "AI developer Bangalore",
     "AI chatbot developer Bangalore",
     "Next.js developer Bangalore",
@@ -61,14 +66,12 @@ export const metadata: Metadata = {
     type: "profile",
     firstName: "Mohammed Shoaeb",
     lastName: "Malik",
-    images: [{ url: "/malik-black-suit (2).jpeg", width: 1182, height: 1040, alt: "Mohammed Shoaeb Malik, freelance web and AI developer in Bangalore" }]
   },
   twitter: {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
-    creator: "@malik_shoa44572",
-    images: ["/malik-black-suit (2).jpeg"]
+    creator: "@malik_shoa44572"
   },
   other: {
     "geo.region": "IN-KA",
@@ -115,6 +118,7 @@ const STRUCTURED_DATA = {
       address: ADDRESS,
       areaServed: [
         { "@type": "City", name: "Bengaluru" },
+        ...ALL_AREAS.map((a) => ({ "@type": "Place", name: `${a}, Bengaluru` })),
         { "@type": "Country", name: "India" }
       ],
       serviceType: [

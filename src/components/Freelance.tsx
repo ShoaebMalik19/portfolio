@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Bot, Boxes, Globe, Plus, Rocket, Wrench } from "lucide-react";
 import { RevealWords, TiltIn } from "@/components/ScrollFX";
 import { FAQ } from "@/data/faq";
+import Link from "next/link";
+import { ALL_AREAS, LANDING_PAGES } from "@/data/areas";
 
 /*
   Freelance services + FAQ. Written for people in Bangalore searching for a
@@ -114,6 +116,39 @@ export function FreelanceServices({ whatsappHref }: { whatsappHref: string }) {
             </span>
             Begin a project
           </a>
+        </div>
+
+        {/* Where I work: every area name is real text for local search */}
+        <div className="mt-14 grid gap-8 border-t border-border pt-10 lg:grid-cols-[1fr_2fr] lg:gap-12">
+          <div>
+            <h3 className="font-serif text-3xl font-medium text-primary sm:text-4xl">
+              Serving all of <span className="italic text-accent">Bangalore</span>
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-secondary">
+              In person around the city, remotely anywhere in India.
+            </p>
+            <ul className="mt-5 space-y-2">
+              {LANDING_PAGES.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="group inline-flex items-center gap-2 text-sm text-accent hover:text-primary">
+                    {l.label} <ArrowRight size={14} className="transition group-hover:translate-x-1" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <ul className="flex flex-wrap content-start gap-2">
+            {ALL_AREAS.map((a) => (
+              <li
+                key={a}
+                className={`border px-3 py-1.5 text-[13px] ${
+                  a === "RT Nagar" ? "border-accent/60 bg-accent/10 text-primary" : "border-border bg-card text-secondary"
+                }`}
+              >
+                {a}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
