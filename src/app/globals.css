@@ -270,3 +270,57 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .swipe-nudge { animation: none; }
 }
+
+/* ── Spotlight cards: soft glow + lit border that follow the cursor ── */
+.spot { position: relative; }
+.spot::before,
+.spot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  z-index: 3;
+}
+.spot::before {
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(215, 199, 170, 0.09), transparent 60%);
+}
+.spot::after {
+  padding: 1px;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(215, 199, 170, 0.75), transparent 65%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+@media (hover: hover) {
+  .spot:hover::before,
+  .spot:hover::after { opacity: 1; }
+}
+
+/* ── Section ghost numerals ── */
+.ghost-num {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(215, 199, 170, 0.09);
+}
+
+/* ── Tech marquee ── */
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 2rem;
+  animation: marquee 60s linear infinite;
+}
+.marquee-reverse { animation-direction: reverse; }
+.marquee-mask:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}

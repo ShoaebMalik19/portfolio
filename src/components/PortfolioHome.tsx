@@ -25,6 +25,13 @@ import {
   MessageCircle,
   MapPin,
   ShieldCheck,
+  BadgeCheck,
+  BarChart3,
+  Users,
+  Code2,
+  LayoutTemplate,
+  Server,
+  Cpu,
   Trophy
 } from "lucide-react";
 import { projects, ribbonShots, type Project } from "@/data/projects";
@@ -67,25 +74,25 @@ const expertiseGroups = [
   {
     code: "01",
     title: "Programming Languages",
-    icon: "</>",
+    icon: Code2,
     items: ["Python", "Java", "C", "JavaScript", "TypeScript", "HTML", "CSS"]
   },
   {
     code: "02",
     title: "Frontend",
-    icon: "◻",
+    icon: LayoutTemplate,
     items: ["React", "Next.js", "Tailwind CSS"]
   },
   {
     code: "03",
     title: "Backend & APIs",
-    icon: "⬡",
+    icon: Server,
     items: ["Node.js", "Express", "Django", "Supabase", "REST APIs"]
   },
   {
     code: "04",
     title: "AI · Web3 · Tools",
-    icon: "⬬",
+    icon: Cpu,
     items: ["AI Integration", "Chatbots", "RAG", "Smart Contracts", "Docker", "Git", "GitHub", "Postman"]
   }
 ];
@@ -93,29 +100,29 @@ const expertiseGroups = [
 /* ── Progress log: credentials and community ───────────────── */
 const progressItems = [
   {
-    icon: "📜", title: "Oracle Certified Generative AI Professional",
+    icon: BadgeCheck, title: "Oracle Certified Generative AI Professional",
     org: "Oracle", link: "https://catalog-education.oracle.com/pls/certview/sharebadge?id=BD7BAF5724C0D90062240DF9DF7E0EC310ED67B08F9BFD943D4DF0066F032153",
     details: ["Certified in practical generative AI foundations and use cases."]
   },
   {
-    icon: "📜", title: "Oracle Certified Data Science Professional",
+    icon: BadgeCheck, title: "Oracle Certified Data Science Professional",
     org: "Oracle", link: "https://catalog-education.oracle.com/pls/certview/sharebadge?id=0A52CD37B7330566782AACB09BF0428E93391AC41E5522F92E450433F31BF865",
     details: ["Certified in data science workflows, modeling, and applied analysis."]
   },
   {
-    icon: "📊", title: "Data Science Job Simulation",
+    icon: BarChart3, title: "Data Science Job Simulation",
     org: "Deloitte",
     details: ["Completed Deloitte's data science job simulation."]
   },
   {
-    icon: "🤝", title: "AI-FI Club Member",
+    icon: Users, title: "AI-FI Club Member",
     details: ["Active contributor to a community building AI-focused events and products."]
   },
   {
-    icon: "🤝", title: "IDC Club Member",
+    icon: Users, title: "IDC Club Member",
     details: ["Engaged in innovation-driven initiatives and collaborative development culture."]
   }
-] as { icon: string; title: string; org?: string; link?: string; details: string[] }[];
+] as { icon: React.ComponentType<{ size?: number; className?: string }>; title: string; org?: string; link?: string; details: string[] }[];
 
 /* ── About expandable items ────────────────────────────────── */
 const aboutItems = [
@@ -165,6 +172,20 @@ function CursorGlow() {
    ROOT COMPONENT
 ══════════════════════════════════════════════════════════════ */
 export function PortfolioHome() {
+  // One listener feeds the cursor position to whichever .spot card is under the pointer.
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse") return;
+      const el = (e.target as HTMLElement | null)?.closest<HTMLElement>(".spot");
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+      el.style.setProperty("--my", `${e.clientY - r.top}px`);
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, []);
+
   return (
     // reducedMotion="user": framer skips movement for visitors who ask for less
     // motion, while server and client still render identical markup.
@@ -175,28 +196,29 @@ export function PortfolioHome() {
       <Hero />
 
       <FloatingAbout />
+      <ProofStrip />
 
-      <Section id="wins" eyebrow="02" title="Hackathon Wins" bgClass="bg-bg-projects">
+      <Section id="wins" eyebrow="02" title="Hackathon" accent="Wins" intro="Three wins, each backed by a certificate, a photo from the event or a live app." bgClass="bg-bg-projects">
         <WinsGrid />
       </Section>
 
-      <Section id="experience" eyebrow="03" title="Experience" bgClass="bg-bg-progress">
+      <Section id="experience" eyebrow="03" title="Work &" accent="Experience" intro="Client sites that are live today, plus internships at a startup and a university lab." bgClass="bg-bg-progress">
         <ExperienceSplit />
       </Section>
 
-      <Section id="projects" eyebrow="04" title="Featured Projects" bgClass="bg-bg-projects">
+      <Section id="projects" eyebrow="04" title="Featured" accent="Projects" intro="Hackathon builds and side projects across AI, blockchain and the web, most of them live." bgClass="bg-bg-projects">
         <ProjectShowcase />
       </Section>
 
-      <Section id="progress" eyebrow="05" title="Progress Log" bgClass="bg-bg-progress">
+      <Section id="progress" eyebrow="05" title="Progress" accent="Log" intro="Certifications and the communities I build with." bgClass="bg-bg-progress">
         <ProgressLog />
       </Section>
 
-      <Section id="expertise" eyebrow="06" title="Area of Expertise" bgClass="bg-bg-expertise">
+      <Section id="expertise" eyebrow="06" title="Area of" accent="Expertise" intro="The tools I reach for, from the first prototype to production." bgClass="bg-bg-expertise">
         <ExpertiseGrid />
       </Section>
 
-      <Section id="contact" eyebrow="07" title="Contact" bgClass="bg-bg-contact">
+      <Section id="contact" eyebrow="07" title="Get in" accent="Touch" bgClass="bg-bg-contact">
         <ContactSection />
       </Section>
 
@@ -744,7 +766,7 @@ function WinsGrid() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ delay: i * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="group card-premium relative flex flex-col overflow-hidden border border-border bg-card transition-all duration-500 hover:-translate-y-1 hover:border-accent/50"
+          className="spot group card-premium relative flex flex-col overflow-hidden border border-border bg-card transition-all duration-500 hover:-translate-y-1 hover:border-accent/50"
         >
           {/* Visual header: project screen if there is one, otherwise a trophy plate */}
           <div className="relative h-32 overflow-hidden border-b border-border sm:h-40 lg:h-44">
@@ -875,7 +897,7 @@ function RoleColumn({ title, note, roles }: { title: string; note: string; roles
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}
             transition={{ delay: i * 0.06, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="group card-premium overflow-hidden border border-border bg-card transition duration-300 hover:border-accent/40"
+            className="spot group card-premium overflow-hidden border border-border bg-card transition duration-300 hover:border-accent/40"
           >
             {r.image && (
               <div className="relative h-32 overflow-hidden border-b border-border sm:h-36 lg:h-40">
@@ -966,7 +988,7 @@ function FloatingAbout() {
           </div>
 
           {/* Expandable accordion */}
-          <div className="grid gap-2">
+          <div className="grid content-start gap-2">
             {aboutItems.map((item) => {
               const isOpen = openKey === item.key;
               return (
@@ -1106,7 +1128,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       onClick={() => {
         if (project.demo) window.open(project.demo, "_blank", "noopener,noreferrer");
       }}
-      className={`group card-premium flex h-[430px] w-[80vw] max-w-[340px] shrink-0 snap-start flex-col overflow-hidden border border-border bg-card transition-all duration-500 hover:border-accent/50 sm:w-[330px] lg:h-[500px] lg:hover:w-[450px] ${
+      className={`spot group card-premium flex h-[430px] w-[80vw] max-w-[340px] shrink-0 snap-start flex-col overflow-hidden border border-border bg-card transition-all duration-500 hover:border-accent/50 sm:w-[330px] lg:h-[500px] lg:hover:w-[450px] ${
         project.demo ? "cursor-pointer" : ""
       }`}
     >
@@ -1200,10 +1222,10 @@ function ProgressLog() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-60px" }}
-          className="flex flex-col border border-border bg-card card-premium p-5 transition duration-300 hover:border-accent/40"
+          className="spot flex flex-col border border-border bg-card card-premium p-5 transition duration-300 hover:border-accent/40"
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center border border-accent/28 bg-accent/10 text-xl">
-            {item.icon}
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent">
+            <item.icon size={18} />
           </span>
           <h3 className="mt-5 font-display text-lg leading-snug text-primary">{item.title}</h3>
           <p className="mt-3 text-sm leading-6 text-secondary">{item.details[0]}</p>
@@ -1237,6 +1259,8 @@ function ProgressLog() {
 ══════════════════════════════════════════════════════════════ */
 function ExpertiseGrid() {
   return (
+    <div>
+    <TechMarquee />
     <div className="grid gap-3 sm:grid-cols-2 lg:gap-5">
       {expertiseGroups.map((group, i) => (
         <motion.div
@@ -1245,12 +1269,12 @@ function ExpertiseGrid() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ delay: i * 0.08, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="group card-premium rounded-none border border-border bg-card p-4 transition-all duration-300 sm:p-6 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
+          className="spot group card-premium rounded-none border border-border bg-card p-4 transition-all duration-300 sm:p-6 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
         >
           {/* Category header */}
           <div className="mb-3 flex items-center gap-3 sm:mb-5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-accent/25 bg-accent/8 font-mono text-xs text-accent">
-              {group.icon}
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent">
+              <group.icon size={16} />
             </span>
             <div>
               <p className="font-display text-[9px] uppercase tracking-[0.36em] text-secondary">
@@ -1274,6 +1298,31 @@ function ExpertiseGrid() {
             ))}
           </ul>
         </motion.div>
+      ))}
+    </div>
+    </div>
+  );
+}
+
+/* Two counter-scrolling rows of every tool, pausing on hover. */
+function TechMarquee() {
+  const all = expertiseGroups.flatMap((g) => g.items);
+  const half = Math.ceil(all.length / 2);
+  const rows = [all.slice(0, half), all.slice(half)];
+  return (
+    <div className="marquee-mask -mx-5 mb-8 grid gap-3 overflow-hidden sm:-mx-8 lg:-mx-12 lg:mb-12" aria-hidden>
+      {rows.map((row, r) => (
+        <div key={r} className={`marquee-track ${r === 1 ? "marquee-reverse" : ""}`}>
+          {[...row, ...row, ...row, ...row].map((t, i) => (
+            <span
+              key={i}
+              className="flex shrink-0 items-center gap-3 whitespace-nowrap font-serif text-[clamp(1.6rem,3.4vw,2.8rem)] italic leading-none text-primary/80"
+            >
+              {t}
+              <span className="h-1.5 w-1.5 rounded-full bg-accent/70" />
+            </span>
+          ))}
+        </div>
       ))}
     </div>
   );
@@ -1462,26 +1511,77 @@ function XIcon() {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   PROOF STRIP — the numbers, all counted from the data files
+══════════════════════════════════════════════════════════════ */
+function ProofStrip() {
+  const stats = [
+    { n: wins.length, label: "Hackathon wins", href: "#wins" },
+    { n: clientWork.length, label: "Live client sites", href: "#experience" },
+    { n: internships.length, label: "Internships", href: "#experience" },
+    { n: projects.length, label: "Projects built", href: "#projects" }
+  ];
+  return (
+    <div className="border-y border-border bg-bg-about px-5 sm:px-8 lg:px-12">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 lg:grid-cols-4">
+        {stats.map((st, i) => (
+          <a
+            key={st.label}
+            href={st.href}
+            className={`group flex items-end gap-3 py-6 transition-colors hover:bg-white/[0.02] sm:py-8 lg:justify-center ${
+              i % 2 === 1 ? "border-l border-border pl-5" : "pr-5"
+            } ${i >= 2 ? "border-t border-border lg:border-t-0" : ""} ${i === 2 ? "lg:border-l lg:pl-5" : ""}`}
+          >
+            <span className="font-serif text-5xl leading-none text-primary transition-colors group-hover:text-accent sm:text-6xl">
+              {String(st.n).padStart(2, "0")}
+            </span>
+            <span className="pb-1 font-mono text-[10px] uppercase leading-4 tracking-[0.2em] text-secondary">{st.label}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
    SHARED HELPERS
 ══════════════════════════════════════════════════════════════ */
-function Section({ id, eyebrow, title, children, bgClass = "" }: {
-  id: string; eyebrow: string; title: string; children: React.ReactNode; bgClass?: string;
+function Section({ id, eyebrow, title, accent, intro, children, bgClass = "" }: {
+  id: string; eyebrow: string; title: string; accent?: string; intro?: string; children: React.ReactNode; bgClass?: string;
 }) {
   return (
-    <section id={id} className={`relative px-5 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24 transition-colors duration-500 ${bgClass}`}>
+    <section id={id} className={`relative overflow-hidden px-5 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-28 transition-colors duration-500 ${bgClass}`}>
+      {/* Oversized outlined section number, desktop only */}
+      <span
+        aria-hidden
+        className="ghost-num pointer-events-none absolute -right-4 top-6 hidden select-none font-display text-[15rem] font-bold leading-none lg:block"
+      >
+        {eyebrow}
+      </span>
       <motion.div
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-90px" }}
         variants={fadeUp}
-        className="mx-auto max-w-7xl"
+        className="relative mx-auto max-w-7xl"
       >
-        <div className="mb-7 flex items-end justify-between gap-6 border-b border-border pb-5 sm:mb-10 sm:pb-6">
+        <div className="mb-8 grid gap-4 sm:mb-12 lg:grid-cols-[1.3fr_1fr] lg:items-end lg:gap-12">
           <div>
-            <p className="font-display text-xs uppercase tracking-[0.3em] text-secondary sm:text-sm">{eyebrow}</p>
-            <h2 className="mt-2 font-display text-[2.1rem] font-semibold leading-tight text-primary sm:mt-3 sm:text-6xl">{title}</h2>
+            <p className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.32em] text-secondary">
+              <span className="text-accent">{eyebrow}</span>
+              <span className="h-px w-10 bg-[rgba(215,199,170,0.5)]" />
+              {id === "progress" ? "credentials" : id}
+            </p>
+            <h2 className="mt-4 font-serif text-[2.7rem] font-medium leading-[0.98] text-primary sm:text-6xl lg:text-7xl">
+              {title}
+              {accent && (
+                <>
+                  {" "}
+                  <span className="italic text-accent">{accent}</span>
+                </>
+              )}
+            </h2>
           </div>
-          <ShieldCheck className="hidden text-accent/60 sm:block" size={26} />
+          {intro && <p className="max-w-md text-[15px] leading-7 text-secondary lg:justify-self-end lg:text-right">{intro}</p>}
         </div>
         {children}
       </motion.div>
